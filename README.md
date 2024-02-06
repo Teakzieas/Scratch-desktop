@@ -113,7 +113,7 @@ To use the above FPM rather than the x86 version that is downloaded with electro
 
 `export USE_SYSTEM_FPM="true"`
 
-To build reliably use node 16.13.1 and use all available memory using the following export
+To build reliably use Node 16.20.0 and use all available memory using the following export
 
 `export NODE_OPTIONS="--max-old-space-size=4096"`
 
