@@ -3,12 +3,13 @@
   "productName": "Scratch",
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Scratch Foundation",
-  "version": "3.30.5",
+  "version": "3.30.7",
   "license": "BSD-3-Clause",
   "scripts": {
     "clean": "rimraf ./dist ./static/assets",
     "start": "mkdirp ./dist && electron-webpack dev --bail --display-error-details --env.minify=false --no-progress",
     "compile": "mkdirp ./dist && electron-webpack --bail --display-error-details --env.minify=false --no-progress",
+    "compile:cpp": "node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./cpp && cp ./cpp/build/Release/gpiolib.node ./static/ ",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
     "build": "npm run build:dev",
     "build:dev": "npm run compile && npm run doBuild -- --mode=dev",
@@ -16,6 +17,7 @@
     "build:dist": "npm run compile && npm run doBuild -- --mode=dist",
     "doBuild": "node ./scripts/electron-builder-wrapper.js",
     "dist": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dist",
+    "dist:rpi": "npm run clean && npm run compile && npm run compile:cpp && npm run fetch && npm run doBuild -- --mode=dist --platform=linux",
     "distDev": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dev",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
@@ -24,9 +26,6 @@
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
-  },
-  "overrides": {
-    "scratch-blocks": "github:raspberrypifoundation/scratch-blocks"
   },
   "dependencies": {
     "source-map-support": "^0.5.19"
@@ -65,6 +64,7 @@
     "minimist": "^1.2.5",
     "mkdirp": "^1.0.4",
     "nets": "^3.2.0",
+    "node-gyp": "^10.0.1",
     "postcss-import": "12.0.1",
     "postcss-simple-vars": "5.0.2",
     "react": "16.14.0",
@@ -74,6 +74,7 @@
     "redux": "3.7.2",
     "rimraf": "^3.0.2",
     "scratch-gui": "github:scratchfoundation/scratch-gui#scratch-desktop-v3.30.1",
+    "scratch-blocks": "0.2.0-prerelease.20230718081157",
     "uuid": "^8.0.0",
     "webpack": "^4.43.0",
     "webpack-merge": "4.2.2"

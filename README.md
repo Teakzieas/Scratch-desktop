@@ -4,7 +4,17 @@ Scratch 3.0 as a standalone desktop application
 
 ## Developer Instructions
 
+This version of scratch will apply patches (in the patches folder) to node_modules:
+
+- scratch-blocks
+- scratch-gui
+- scratch-vm
+
+These patches are based on the files in ./raspberry-pi though the patch creation process is not scripted.
+
 ### Releasing a new version
+
+For Raspberry Pi specific builds please note [**Making-a-Raspberry-Pi-Specific-Build**](#making-a-raspberry-pi-specific-build)
 
 Let's assume that you want to make a new release, version `3.999.0`, corresponding to `scratch-gui` version
 `0.1.0-prerelease.20yymmdd`.
@@ -55,7 +65,7 @@ other changes which might affect the media libraries.
 
 `npm run dist`
 
-Node that on macOS this will require installing various certificates.
+Note that on macOS this will require installing various certificates.
 
 #### Signing the NSIS installer (Windows, non-store)
 
@@ -93,7 +103,7 @@ See this issue for more detail: <https://github.com/electron/electron-osx-sign/i
 
 #### Workaround for Raspberry Pi OS
 
-FPM is not included in RPiOS so please install via ruby
+FPM is not included in RPiOS so install via Ruby:
 
 `sudo apt-get install ruby-full`
 
@@ -106,6 +116,24 @@ To use the above FPM rather than the x86 version that is downloaded with electro
 To build reliably use node 16.13.1 and use all available memory using the following export
 
 `export NODE_OPTIONS="--max-old-space-size=4096"`
+
+### Making a Raspberry Pi Specific Build
+
+Can be done on ~~Mac~~ (currently this will result in `gpiolib.node` being compiled for the wrong architecture, see below) or Raspberry Pi OS (though for the Pi the above needs to be run through).
+
+Currently NodeJS > 16 will throw certificate errors. To get around this, install the Node 16 version defined in `.tool-versions` via [asdf](https://asdf-vm.com/guide/getting-started.html):
+
+`asdf install`
+
+Ensure that `static/gpiolib.node` is built for the correct architecture, ie. delete it and run `npm run compile:cpp` on the target platform (clearly this process needs improving).
+
+Note: remember to increment the package version before building / releasing (`"version"` in `package.json`).
+
+Build the Linux / Raspberry Pi package:
+
+`npm run dist:rpi`
+
+This will output 2 builds (arm64 and armv7l).
 
 ### Make a semi-packaged build
 
