@@ -4,54 +4,115 @@
 #include <stdio.h>
 
 extern "C" {
-#include "raspi-gpio.h"
-} 
+#include "gpiolib.h"
+}
+
+int running = 0;
+
+// Check if GPIO library is running
+int is_running(){
+    if(!running){
+        int ret = gpiolib_init();
+        if (ret < 0)
+            return EXIT_FAILURE;
+
+        // Check number of GPIO chips
+        if (!ret)
+            return EXIT_FAILURE;
+
+        ret = gpiolib_mmap();
+        if (ret)
+            return EXIT_FAILURE;
+
+        running = 1;
+    }
+    return EXIT_SUCCESS;
+}
 
 // Toggle gpio pin (sets as output first)
 int toggle(int pinnum)
 {
-    if(gpio_base == NULL && setup() != EXIT_SUCCESS)
+    if (is_running() == EXIT_FAILURE)
         return EXIT_FAILURE;
 
-    gpio_set(pinnum,FUNC_OP,DRIVE_UNSET,PULL_UNSET);
+    gpio_set_fsel(pinnum, GPIO_FSEL_OUTPUT);
+    gpio_set_pull(pinnum, PULL_NONE);
 
-    int level = get_gpio_level(pinnum);
+    int level = gpio_get_level(pinnum);
     level ^= 1;
 
-    gpio_set(pinnum,FUNC_OP,level,PULL_UNSET);
+    GPIO_DRIVE_T drive;
+    drive = (level == 1) ? DRIVE_HIGH : DRIVE_LOW;
+    gpio_set_drive(pinnum, drive);
 
     return EXIT_SUCCESS; 
 }
 
 // Set gpio pin to high or low (make pin output too)
-int set(int pinnum, int drive)
+int set(int pinnum, int level)
 {
-    if(gpio_base == NULL && setup() != EXIT_SUCCESS)
+    if (is_running() == EXIT_FAILURE)
         return EXIT_FAILURE;
 
-    gpio_set(pinnum,FUNC_OP,drive,PULL_UNSET);
+    gpio_set_fsel(pinnum, GPIO_FSEL_OUTPUT);
+    gpio_set_pull(pinnum, PULL_NONE);
+
+    GPIO_DRIVE_T drive;
+    drive = (level == 1) ? DRIVE_HIGH : DRIVE_LOW;
+    gpio_set_drive(pinnum, drive);
 
     return EXIT_SUCCESS; 
 }
 
 // Get gpio pin state (func decides whether to make pin an input/output, pu decides whether to make pin pullup/pulldown etc.)
-int get(int pinnum, int func, int pu)
+int get(int pinnum, int func, int pull_mode)
 {
-    if(gpio_base == NULL && setup() != EXIT_SUCCESS)
-        return 0;
+    if (is_running() == EXIT_FAILURE)
+        return EXIT_FAILURE;
 
-    gpio_set(pinnum,func,DRIVE_UNSET,pu);
+    switch (func){
+        case 1:
+            gpio_set_fsel(pinnum, GPIO_FSEL_OUTPUT);
+            break;
+        case 0:
+            gpio_set_fsel(pinnum, GPIO_FSEL_INPUT);
+            break;
+    }
 
-    return get_gpio_level(pinnum);
+    switch (pull_mode){
+        case 2:
+            gpio_set_pull(pinnum, PULL_UP);
+            break;
+        case 1:
+            gpio_set_pull(pinnum, PULL_DOWN);
+            break;
+        case 0:
+            gpio_set_pull(pinnum, PULL_NONE);
+            break;
+    }
+
+    return gpio_get_level(pinnum);
 }
 
 // Set gpio pin pull mode (make pin input)
 int pull(int pinnum, int pull_mode)
 {
-    if(gpio_base == NULL && setup() != EXIT_SUCCESS)
+
+    if (is_running() == EXIT_FAILURE)
         return EXIT_FAILURE;
 
-    gpio_set(pinnum,FUNC_IP,DRIVE_UNSET,pull_mode);
+    gpio_set_fsel(pinnum, GPIO_FSEL_INPUT);
+    switch (pull_mode){
+        case 2:
+            gpio_set_pull(pinnum, PULL_UP);
+            break;
+        case 1:
+            gpio_set_pull(pinnum, PULL_DOWN);
+            break;
+        case 0:
+            gpio_set_pull(pinnum, PULL_NONE);
+            break;
+    }
 
     return EXIT_SUCCESS; 
 }
@@ -173,7 +234,7 @@ napi_value Get(napi_env env, napi_callback_info info) {
 
     int pin;
     int func;
-    int pu;
+    int pull_mode;
 
     status = napi_get_value_int32(env, args[0], &pin);
     assert(status == napi_ok);
@@ -181,10 +242,10 @@ napi_value Get(napi_env env, napi_callback_info info) {
     status = napi_get_value_int32(env, args[1], &func);
     assert(status == napi_ok);
 
-    status = napi_get_value_int32(env, args[2], &pu);
+    status = napi_get_value_int32(env, args[2], &pull_mode);
     assert(status == napi_ok);
 
-    int ret = get(pin,func,pu);
+    int ret = get(pin, func, pull_mode);
 
     napi_value n_ret;
     status = napi_create_int32(env, ret, &n_ret);
@@ -231,7 +292,7 @@ napi_value Pull(napi_env env, napi_callback_info info) {
     status = napi_get_value_int32(env, args[1], &pull_mode);
     assert(status == napi_ok);
 
-    int ret = pull(pin,pull_mode);
+    int ret = pull(pin, pull_mode);
 
     napi_value n_ret;
     status = napi_create_int32(env, ret, &n_ret);
