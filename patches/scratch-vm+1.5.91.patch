@@ -47,7 +47,7 @@ index a5e2c4e..88c5ba2 100644
  };
 diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
 new file mode 100644
-index 0000000..29193ce
+index 0000000..4dd36ef
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
 @@ -0,0 +1,247 @@
@@ -249,11 +249,11 @@ index 0000000..29193ce
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
++        const state = gpio.get(pin,-1,-1); // Get state of pin, leave pin as input/output, leave pull state
++        let binary = 0;
 +
-+        binary = 0
-+        if(val == 'high') 
-+            binary = 1
++        if(val == 'high')
++            binary = 1;
 +
 +        return state == binary
 +    }
@@ -263,9 +263,9 @@ index 0000000..29193ce
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
-+    
-+        binary = 0
++        const state = gpio.get(pin,-1,-1); // Get state of pin, leave pin as input/output, leave pull state
++        let binary = 0;
++
 +        if(val == 'high') 
 +            binary = 1
 +
@@ -275,11 +275,11 @@ index 0000000..29193ce
 +    // Set pin as output and set drive
 +    set_gpio (args)
 +    {
-+        drive = 0
++        let drive = 0;
 +        if(Cast.toString(args.HILO) == "high")
 +            drive = 1;
 +
-+        gpio.set(Cast.toNumber(args.GPIO),drive);   
++        gpio.set(Cast.toNumber(args.GPIO),drive);
 +    }
 +
 +    // Set pin as input, and set pull paramter
@@ -1374,10 +1374,10 @@ index 0000000..7db91a0
 +module.exports = Scratch3PiSenseHatBlocks;
 diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
 new file mode 100644
-index 0000000..3f493d9
+index 0000000..9ab90de
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,237 @@
 +const formatMessage = require('format-message');
 +const ArgumentType = require('../../extension-support/argument-type');
 +const BlockType = require('../../extension-support/block-type');
@@ -1563,8 +1563,7 @@ index 0000000..3f493d9
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+
-+        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++        const state = gpio.get(pin,0,2); // Get state of pin, set pin as input, make pull up
 +
 +        if (state == 1)
 +        {
@@ -1583,8 +1582,7 @@ index 0000000..3f493d9
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+
-+        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++        const state = gpio.get(pin,0,2); // Get state of pin, set pin as input, make pull up
 +
 +        if (state == 1)
 +        {
@@ -1601,10 +1599,9 @@ index 0000000..3f493d9
 +    // Set pin as output and set drive
 +    set_gpio (args)
 +    {
++        let drive = 0;
 +        if(Cast.toString(args.HILO) == "on")
 +            drive = 1;
-+        else
-+            drive = 0;
 +
 +        gpio.set(Cast.toNumber(args.GPIO),drive);        
 +    }
