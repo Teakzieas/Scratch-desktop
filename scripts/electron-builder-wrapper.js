@@ -34,7 +34,8 @@ const getPlatformFlag = function (platform) {
     switch (platform||process.platform) {
         case 'win32': return '--windows';
         case 'darwin': return '--macos';
-        case 'linux': return '--linux';
+        case 'linux32': return '--linux';
+        case 'linux64': return '--linux';
     }
     throw new Error(`Could not determine platform flag for platform: ${process.platform}`);
 };
@@ -119,9 +120,13 @@ const calculateTargets = function (wrapperConfig) {
             name: 'nsis:ia32',
             platform: 'win32'
         },
-        linuxDirectDownload: {
-            name: 'deb:arm64 deb:armv7l',
-            platform: 'linux'
+        linuxDirectDownload32: {
+            name: 'deb:armv7l',
+            platform: 'linux32'
+        },
+        linuxDirectDownload64: {
+            name: 'deb:arm64',
+            platform: 'linux64'
         }
     };
     const targets = [];
@@ -151,8 +156,11 @@ const calculateTargets = function (wrapperConfig) {
             }
             targets.push(availableTargets.macDirectDownload);
             break;
-        case 'linux':
-            targets.push(availableTargets.linuxDirectDownload);
+        case 'linux32':
+            targets.push(availableTargets.linuxDirectDownload32);
+            break;
+        case 'linux64':
+            targets.push(availableTargets.linuxDirectDownload64);
             break;
         default:
             throw new Error(`Could not determine targets for platform: ${platform}`);
