@@ -22,7 +22,7 @@
     "distDev": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dev",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
-    "postinstall": "git apply patches/*.patch"
+    "postinstall": "git apply patches/*.patch && cd node_modules/scratch-blocks/ && npm i --ignore-scripts && npm exec -c \"python build.py\""
   },
   "repository": {
     "type": "git",
