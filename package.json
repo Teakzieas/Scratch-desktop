@@ -8,7 +8,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./static/assets",
     "start": "mkdirp ./dist && electron-webpack dev --bail --display-error-details --env.minify=false --no-progress",
-    "compile": "mkdirp ./dist && electron-webpack --bail --display-error-details --env.minify=false --no-progress",
+    "compile": "mkdirp ./dist && electron-webpack --bail --display-error-details --env.minify=false --no-progress && cp patches/*.bmp ./static/",
     "compile:cpp32": "CXX=arm-linux-gnueabihf-g++ CC=arm-linux-gnueabihf-gcc node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./cpp && cp ./cpp/build/Release/gpiolib.node ./static/",
     "compile:cpp64": "CXX=g++ CC=gcc node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./cpp && cp ./cpp/build/Release/gpiolib.node ./static/",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
