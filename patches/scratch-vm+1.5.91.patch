@@ -776,7 +776,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 20, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 20);
-+            return Number((view.getInt16 (16, true) / 480) + 37).toFixed (2);
++            return Number((view.getInt16 (15, true) / 480) + 37).toFixed (2);
 +        }
 +        else return Number (this._imu[4]);
 +    };
@@ -790,7 +790,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 20, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 20);
-+            return Number (view.getInt32 (12, true) / 4096).toFixed (2);
++            return Number (view.getInt32 (11, true) / 4096).toFixed (2);
 +        }
 +        else return Number (this._imu[3]);
 +    };
@@ -804,7 +804,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 28, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 28);
-+            return Number (view.getInt16 (22, true) / 256).toFixed (2);
++            return Number (view.getInt16 (21, true) / 256).toFixed (2);
 +        }
 +        else return Number (this._imu[5]);
 +    };
@@ -818,7 +818,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (50, true) >= 0 ? view.getInt16 (50, true) * 360 / 32768 : 360 + (view.getInt16 (50, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (47, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[0]);
 +    };
@@ -832,7 +832,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (52, true) >= 0 ? view.getInt16 (52, true) * 360 / 32768 : 360 + (view.getInt16 (52, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (49, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[1]);
 +    };
@@ -846,7 +846,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (54, true) >= 0 ? view.getInt16 (54, true) * 360 / 32768 : 360 + (view.getInt16 (54, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (51, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[2]);
 +    };
