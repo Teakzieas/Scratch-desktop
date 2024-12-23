@@ -47,7 +47,7 @@ index a5e2c4e..88c5ba2 100644
  };
 diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
 new file mode 100644
-index 0000000..29193ce
+index 0000000..4dd36ef
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
 @@ -0,0 +1,247 @@
@@ -249,11 +249,11 @@ index 0000000..29193ce
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
++        const state = gpio.get(pin,-1,-1); // Get state of pin, leave pin as input/output, leave pull state
++        let binary = 0;
 +
-+        binary = 0
-+        if(val == 'high') 
-+            binary = 1
++        if(val == 'high')
++            binary = 1;
 +
 +        return state == binary
 +    }
@@ -263,9 +263,9 @@ index 0000000..29193ce
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
-+    
-+        binary = 0
++        const state = gpio.get(pin,-1,-1); // Get state of pin, leave pin as input/output, leave pull state
++        let binary = 0;
++
 +        if(val == 'high') 
 +            binary = 1
 +
@@ -275,11 +275,11 @@ index 0000000..29193ce
 +    // Set pin as output and set drive
 +    set_gpio (args)
 +    {
-+        drive = 0
++        let drive = 0;
 +        if(Cast.toString(args.HILO) == "high")
 +            drive = 1;
 +
-+        gpio.set(Cast.toNumber(args.GPIO),drive);   
++        gpio.set(Cast.toNumber(args.GPIO),drive);
 +    }
 +
 +    // Set pin as input, and set pull paramter
@@ -303,13 +303,15 @@ new file mode 100644
 index 0000000..7db91a0
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_pisensehat/index.js
-@@ -0,0 +1,1068 @@
+@@ -0,0 +1,1067 @@
 +const formatMessage = require('format-message');
 +const ArgumentType = require('../../extension-support/argument-type');
 +const BlockType = require('../../extension-support/block-type');
 +const Cast = require('../../util/cast');
 +const fs = window.require('fs');
 +const cp = window.require('child_process');
++const path = window.require('path');
++const textbmp = path.join(__static,'sense_hat_text.bmp')
 +
 +/**
 + * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -774,7 +776,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 20, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 20);
-+            return Number((view.getInt16 (16, true) / 480) + 37).toFixed (2);
++            return Number((view.getInt16 (15, true) / 480) + 37).toFixed (2);
 +        }
 +        else return Number (this._imu[4]);
 +    };
@@ -788,7 +790,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 20, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 20);
-+            return Number (view.getInt32 (12, true) / 4096).toFixed (2);
++            return Number (view.getInt32 (11, true) / 4096).toFixed (2);
 +        }
 +        else return Number (this._imu[3]);
 +    };
@@ -802,7 +804,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 28, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 28);
-+            return Number (view.getInt16 (22, true) / 256).toFixed (2);
++            return Number (view.getInt16 (21, true) / 256).toFixed (2);
 +        }
 +        else return Number (this._imu[5]);
 +    };
@@ -816,7 +818,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (50, true) >= 0 ? view.getInt16 (50, true) * 360 / 32768 : 360 + (view.getInt16 (50, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (47, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[0]);
 +    };
@@ -830,7 +832,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (52, true) >= 0 ? view.getInt16 (52, true) * 360 / 32768 : 360 + (view.getInt16 (52, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (49, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[1]);
 +    };
@@ -844,7 +846,7 @@ index 0000000..7db91a0
 +            fs.readSync (fd, data, 0, 56, 0);
 +            fs.closeSync (fd);
 +            const view = new DataView (data.buffer, 0, 56);
-+            return Number (view.getInt16 (54, true) >= 0 ? view.getInt16 (54, true) * 360 / 32768 : 360 + (view.getInt16 (54, true) * 360 / 32768)).toFixed (2);
++            return Number (view.getInt16 (51, true) * 360 / 32768).toFixed (2);
 +        }
 +        else return Number (this._imu[2]);
 +    };
@@ -893,10 +895,9 @@ index 0000000..7db91a0
 +        const valb = (Math.trunc (this._bg[2] / 32) * 1024) + (Math.trunc (this._bg[0] / 32) * 32) + Math.trunc (this._bg[1] / 32);
 +
 +        let pix = new Uint8Array (128);
-+        for (count = 0; count < 64; count++)
++        for (let count = 0; count < 64; count++)
 +        {
-+            if (symbol.charAt (count) == '1') val = valf;
-+            else val = valb;
++            let val = (symbol.charAt (count) == '1') ? valf : valb;
 +
 +            const pos = this._pixel_remap (count);
 +            pix[pos * 2] = val / 256;
@@ -926,7 +927,7 @@ index 0000000..7db91a0
 +    }
 +
 +    display_sprite (args, util) {
-+      const drawable = this.runtime.renderer.extractDrawable(util.target.drawableID, util.target.x, util.target.y);
++      const drawable = this.runtime.renderer.extractDrawableScreenSpace(util.target.drawableID, util.target.x, util.target.y);
 +      if ((drawable.width < 1) || (drawable.height < 1)) return;
 +
 +      // fit the sprite in a square
@@ -942,13 +943,12 @@ index 0000000..7db91a0
 +      }
 +
 +      const imageData = this.bigCtx.createImageData(drawable.width, drawable.height);
-+      imageData.data.set(drawable.data);
++      imageData.data.set(drawable.imageData.data);
 +      this.bigCtx.putImageData(imageData, xOffset, yOffset);
 +      this.smallCtx.drawImage(this.bigCanvas,
 +          0, 0, squareSize, squareSize,
 +          0, 0, 8, 8);
 +      const matrixImageData = this.smallCtx.getImageData(0, 0, 8, 8);
-+
 +      this._displayImageData(matrixImageData);
 +
 +      this.smallCtx.clearRect(0, 0, this.smallCanvas.width, this.smallCanvas.height);
@@ -1058,8 +1058,8 @@ index 0000000..7db91a0
 +        let lgr = new Uint8Array (80);
 +        let inv = 90 - dict.indexOf (lett);
 +        if (inv > 90) inv = 90;
-+        const fd = fs.openSync ('/usr/lib/scratch3/sense_hat_text.bmp', 'r');
-+        for (count = 0; count < 5; count++)
++        const fd = fs.openSync (textbmp, 'r');
++        for (let count = 0; count < 5; count++)
 +            fs.readSync (fd, lgr, count * 16, 16, 3098 + inv * 80 + (64 - count * 16));
 +        fs.closeSync (fd);
 +        return lgr;
@@ -1069,11 +1069,10 @@ index 0000000..7db91a0
 +    {
 +        let pix = new Uint8Array (128);
 +        const lgr = this._load_letter (lett);
-+        for (count = 0; count < 64; count++)
++        for (let count = 0; count < 64; count++)
 +        {
 +            const map = this._map_orient (count, orient);
-+            if (map > 7 && map < 48 && lgr[(map - 8) * 2] == 0xFF) val = valf;
-+            else val = valb;
++            let val = (map > 7 && map < 48 && lgr[(map - 8) * 2] == 0xFF) ? valf : valb;
 +            pix[count * 2] = val / 256;
 +            pix[count * 2 + 1] = val % 256;
 +        }
@@ -1103,7 +1102,7 @@ index 0000000..7db91a0
 +        const bg1 = valb % 256;
 +
 +        // clear the grid to off and output
-+        for (pel = 0; pel < 64; pel++)
++        for (let pel = 0; pel < 64; pel++)
 +        {
 +            pix[pel*2] = bg0;
 +            pix[pel*2 + 1] = bg1;
@@ -1112,15 +1111,15 @@ index 0000000..7db91a0
 +        fs.writeSync (fd, pix, 0, 128, 0);
 +        fs.closeSync (fd);
 +
-+        for (lett_ind = 0; lett_ind < message.length + 2; lett_ind++)
++        for (let lett_ind = 0; lett_ind < message.length + 2; lett_ind++)
 +        {
 +            const lgrid = this._load_letter (message[lett_ind]);
-+            for (char_ind = 0; char_ind < 6; char_ind++)
++            for (let char_ind = 0; char_ind < 6; char_ind++)
 +            {
 +                // scroll the grid
-+                for (col = 0; col < 7; col++)
++                for (let col = 0; col < 7; col++)
 +                {
-+                    for (row = 0; row < 8; row++)
++                    for (let row = 0; row < 8; row++)
 +                    {
 +                        if (orient == 0)
 +                        {
@@ -1150,7 +1149,7 @@ index 0000000..7db91a0
 +                }
 +
 +                // add the new line of pixels
-+                for (row = 0; row < 8; row++)
++                for (let row = 0; row < 8; row++)
 +                {
 +                    if (orient == 0)
 +                    {
@@ -1233,7 +1232,7 @@ index 0000000..7db91a0
 +
 +                // pause for a bit
 +                const start = new Date().getTime();
-+                for (i = 0; i < 1e7; i++)
++                for (let i = 0; i < 1e7; i++)
 +                {
 +                    if ((new Date().getTime() - start) > 100) break;
 +                }
@@ -1374,10 +1373,10 @@ index 0000000..7db91a0
 +module.exports = Scratch3PiSenseHatBlocks;
 diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
 new file mode 100644
-index 0000000..3f493d9
+index 0000000..9ab90de
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,237 @@
 +const formatMessage = require('format-message');
 +const ArgumentType = require('../../extension-support/argument-type');
 +const BlockType = require('../../extension-support/block-type');
@@ -1563,8 +1562,7 @@ index 0000000..3f493d9
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+
-+        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++        const state = gpio.get(pin,0,2); // Get state of pin, set pin as input, make pull up
 +
 +        if (state == 1)
 +        {
@@ -1583,8 +1581,7 @@ index 0000000..3f493d9
 +    {
 +        const pin = Cast.toNumber (args.GPIO);
 +        const val = Cast.toString (args.HILO);
-+
-+        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++        const state = gpio.get(pin,0,2); // Get state of pin, set pin as input, make pull up
 +
 +        if (state == 1)
 +        {
@@ -1601,10 +1598,9 @@ index 0000000..3f493d9
 +    // Set pin as output and set drive
 +    set_gpio (args)
 +    {
++        let drive = 0;
 +        if(Cast.toString(args.HILO) == "on")
 +            drive = 1;
-+        else
-+            drive = 0;
 +
 +        gpio.set(Cast.toNumber(args.GPIO),drive);        
 +    }
