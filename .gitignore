@@ -23,7 +23,8 @@ npm-*
 /static/assets/
 
 # don't store the gpio build
-/static/**
+/static/*
+!/static/.gitignore
 /raspberry-pi/cpp/build/*
 /cpp/build/*
 /i2c/build/*
