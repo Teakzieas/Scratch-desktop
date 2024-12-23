@@ -26,6 +26,8 @@ npm-*
 /static/**
 /raspberry-pi/cpp/build/*
 /cpp/build/*
+/i2c/build/*
+
 #don't store the dist
 /scratch-dist
 
