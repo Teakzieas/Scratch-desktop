@@ -42,23 +42,40 @@ public:
         }
         return true;
     }
-
-    // Read data from a specific register
-    bool readFromRegister(uint8_t reg, uint8_t& data) const {
-        // Write the register address to the device
-        if (write(i2c_fd, &reg, 1) != 1) {
-            std::cerr << "Failed to write register address to the I2C device.\n";
+    
+    bool writeData(const uint8_t* data, size_t length) const {
+        if (::write(i2c_fd, data, length) != static_cast<ssize_t>(length)) {
+            std::cerr << "Failed to write to the I2C device.\n";
             return false;
         }
+        return true;
+    }
 
-        // Read 1 byte of data from the register
-        if (read(i2c_fd, &data, 1) != 1) {
+    // Read multiple bytes
+    bool readData(uint8_t* data, size_t length) const {
+        if (::read(i2c_fd, data, length) != static_cast<ssize_t>(length)) {
             std::cerr << "Failed to read from the I2C device.\n";
             return false;
         }
-
         return true;
     }
+ 
+    bool readFromRegister(uint8_t reg, uint8_t& data) const {
+    // Write the register address to the device
+    if (write(i2c_fd, &reg, 1) != 1) {
+        std::cerr << "Failed to write register address " << static_cast<int>(reg) << " to the I2C device.\n";
+        return false;
+    }
+
+    // Read 1 byte of data from the register
+    if (read(i2c_fd, &data, 1) != 1) {
+        std::cerr << "Failed to read from the I2C device.\n";
+        return false;
+    }
+
+    std::cerr << "Successfully read data: " << static_cast<int>(data) << std::endl;
+    return true;
+}
 };
 
 #endif // I2CDEVICE_H

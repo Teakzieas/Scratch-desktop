@@ -107,20 +107,92 @@ napi_value ReadFromRegister(napi_env env, napi_callback_info info) {
     return result;
 }
 
-// Initialization function for the module
+
+
+napi_value WriteData(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc != 2) {
+        ThrowJavaScriptError(env, "Expected 2 arguments: device, data (buffer)");
+        return nullptr;
+    }
+
+    // Extract the I2CDevice pointer
+    I2CDevice* device;
+    napi_get_value_external(env, args[0], reinterpret_cast<void**>(&device));
+
+    // Extract the data buffer
+    void* buffer;
+    size_t length;
+    napi_get_buffer_info(env, args[1], &buffer, &length);
+
+    // Perform the write operation
+    bool success = device->writeData(static_cast<uint8_t*>(buffer), length);
+    napi_value result;
+    napi_get_boolean(env, success, &result);
+    return result;
+}
+
+
+napi_value ReadData(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc != 2) {
+        ThrowJavaScriptError(env, "Expected 2 arguments: device, length (number)");
+        return nullptr;
+    }
+
+    // Extract the I2CDevice pointer
+    I2CDevice* device;
+    napi_get_value_external(env, args[0], reinterpret_cast<void**>(&device));
+
+    // Extract the length
+    uint32_t length;
+    napi_get_value_uint32(env, args[1], &length);
+
+    // Allocate a buffer for reading
+    uint8_t* buffer = new uint8_t[length];
+
+    // Perform the read operation
+    bool success = device->readData(buffer, length);
+
+    napi_value result;
+    if (success) {
+        napi_create_buffer_copy(env, length, buffer, nullptr, &result);
+    } else {
+        ThrowJavaScriptError(env, "Failed to read data from the I2C device");
+        result = nullptr;
+    }
+
+    delete[] buffer;  // Clean up the buffer
+    return result;
+}
+
+
 napi_value Init(napi_env env, napi_value exports) {
-    napi_value createDeviceFn, writeFn, readFn;
+    napi_value createDeviceFn, writeDataFn, readDataFn, writeToRegisterFn, readFromRegisterFn;
 
     napi_create_function(env, nullptr, 0, CreateDevice, nullptr, &createDeviceFn);
     napi_set_named_property(env, exports, "createDevice", createDeviceFn);
 
-    napi_create_function(env, nullptr, 0, WriteToRegister, nullptr, &writeFn);
-    napi_set_named_property(env, exports, "writeToRegister", writeFn);
+    napi_create_function(env, nullptr, 0, WriteToRegister, nullptr, &writeToRegisterFn);
+    napi_set_named_property(env, exports, "writeToRegister", writeToRegisterFn);
 
-    napi_create_function(env, nullptr, 0, ReadFromRegister, nullptr, &readFn);
-    napi_set_named_property(env, exports, "readFromRegister", readFn);
+    napi_create_function(env, nullptr, 0, ReadFromRegister, nullptr, &readFromRegisterFn);
+    napi_set_named_property(env, exports, "readFromRegister", readFromRegisterFn);
+
+    napi_create_function(env, nullptr, 0, WriteData, nullptr, &writeDataFn);
+    napi_set_named_property(env, exports, "writeData", writeDataFn);
+
+    napi_create_function(env, nullptr, 0, ReadData, nullptr, &readDataFn);
+    napi_set_named_property(env, exports, "readData", readDataFn);
 
     return exports;
 }
+
 
 NAPI_MODULE(i2cdevice, Init)
