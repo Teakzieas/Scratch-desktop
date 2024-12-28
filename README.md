@@ -59,143 +59,89 @@ other changes which might affect the media libraries.
 
 ### Run in development mode
 
-`npm start`
+`npm run start`
 
 ### Make a packaged build
 
 `npm run dist`
 
-Note that on macOS this will require installing various certificates.
 
-#### Signing the NSIS installer (Windows, non-store)
+# Setting Up and Building Scratch Desktop
 
-*This section is relevant only to members of the Scratch Team.*
+Follow the steps below to set up and build Scratch Desktop on your system.
 
-By default all Windows installers are unsigned. An APPX package for the Microsoft Store shouldn't be signed: it will
-be signed automatically as part of the store submission process. On the other hand, the non-Store NSIS installer
-should be signed.
+## 1. Install Node.js (Version 16)
 
-To generate a signed NSIS installer:
+Use the following commands to install Node.js version 16 using NVM:
 
-1. Acquire our latest digital signing certificate and save it on your computer as a `p12` file.
-2. Set `WIN_CSC_LINK` to the path to your certificate file. For maximum compatibility I use forward slashes.
-   - CMD: `set WIN_CSC_LINK=C:/Users/You/Somewhere/Certificate.p12`
-   - PowerShell: `$env:WIN_CSC_LINK = "C:/Users/You/Somewhere/Certificate.p12"`
-3. Set `WIN_CSC_KEY_PASSWORD` to the password string associated with your P12 file.
-   - CMD: `set WIN_CSC_KEY_PASSWORD=superSecret`
-   - PowerShell: `$env:WIN_CSC_KEY_PASSWORD = "superSecret"`
-4. Build the NSIS installer only: building the APPX installer will fail if these environment variables are set.
-   - `npm run dist -- -w nsis`
-
-#### Workaround for code signing issue in macOS
-
-Sometimes the macOS build process will result in a build which crashes on startup. If this happens, check in `Console`
-for an entry similar to this:
-
-```text
-failed to parse entitlements for Scratch[12345]: OSUnserializeXML: syntax error near line 1
+```bash
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm install 16
 ```
 
-This appears to be an issue with `codesign` itself. Rebooting your computer and trying to build again might help. Yes,
-really.
+## 2. Clone the Repository
 
-See this issue for more detail: <https://github.com/electron/electron-osx-sign/issues/218>
+Clone the Scratch Desktop repository and navigate into the project directory:
 
-#### Workaround for Raspberry Pi OS
-
-FPM is not included in RPiOS so install via Ruby:
-
-`sudo apt-get install ruby-full`
-
-`sudo gem install fpm`
-
-To use the above FPM rather than the x86 version that is downloaded with electron-builder use the following export
-
-`export USE_SYSTEM_FPM="true"`
-
-To build reliably use Node 16.20.0 and use all available memory using the following export
-
-`export NODE_OPTIONS="--max-old-space-size=4096"`
-
-### Making a Raspberry Pi Specific Build
-
-Can be done on ~~Mac~~ (currently this will result in `gpiolib.node` being compiled for the wrong architecture, see below) or Raspberry Pi OS (though for the Pi the above needs to be run through).
-
-Currently NodeJS > 16 will throw certificate errors. To get around this, install the Node 16 version defined in `.tool-versions` via [asdf](https://asdf-vm.com/guide/getting-started.html):
-
-`asdf install`
-
-Ensure that `static/gpiolib.node` is built for the correct architecture, ie. delete it and run `npm run compile:cpp` on the target platform (clearly this process needs improving).
-
-Note: remember to increment the package version before building / releasing (`"version"` in `package.json`).
-
-Build the Linux / Raspberry Pi package:
-
-`npm run dist:rpi`
-
-This will output 2 builds (arm64 and armv7l).
-
-### Make a semi-packaged build
-
-This will simulate a packaged build without actually packaging it: instead the files will be copied to a subdirectory
-of `dist`.
-
-`npm run dist:dir`
-
-### Debugging
-
-You can debug the renderer process by opening the Chromium development console. This should be the same keyboard
-shortcut as Chrome on your platform. This won't work on a packaged build.
-
-You can debug the main process the same way as any Node.js process. I like to use Visual Studio Code with a
-configuration like this:
-
-```jsonc
-    "launch": {
-        "version": "0.2.0",
-        "configurations": [
-            {
-                "name": "Desktop",
-                "type": "node",
-                "request": "launch",
-                "cwd": "${workspaceFolder:scratch-desktop}",
-                "runtimeExecutable": "npm",
-                "autoAttachChildProcesses": true,
-                "runtimeArgs": ["start", "--"],
-                "protocol": "inspector",
-                "skipFiles": [
-                    // it seems like skipFiles only reliably works with 1 entry :(
-                    //"<node_internals>/**",
-                    "${workspaceFolder:scratch-desktop}/node_modules/electron/dist/resources/*.asar/**"
-                ],
-                "sourceMaps": true,
-                "timeout": 30000,
-                "outputCapture": "std"
-            }
-        ]
-    },
+```bash
+git clone https://github.com/Teakzieas/scratch-desktop.git
+cd scratch-desktop
 ```
 
-### Resetting the Telemetry System
+## 5. Run Pi Configuration
 
-This application includes a telemetry system which is only active if the user opts in. When testing this system, it's
-sometimes helpful to reset it by deleting the `telemetry.json` file.
+The following operations are performed by the Pi configuration script:
 
-The location of this file depends on your operating system and whether or not you're running a packaged build. Running
-from `npm start` or equivalent is a non-packaged build.
+\-- Resize the Swap File to 2048 MB (in case a 4GB Pi does not have enough memory to build)
 
-In addition, macOS may store the file in one of two places depending on the OS version and a few other variables. If
-in doubt, I recommend removing both.
+\-- Install Java (required for google-closure-compiler)
 
-- Windows, packaged build: `%APPDATA%\Scratch\telemetry.json`
-- Windows, non-packaged: `%APPDATA%\Electron\telemetry.json`
-- macOS, packaged build: `~/Library/Application Support/Scratch/telemetry.json` or
-  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Scratch/telemetry.json`
-- macOS, non-packaged build: `~/Library/Application Support/Electron/telemetry.json` or
-  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Electron/telemetry.json`
+\-- Install Ruby and FPM (required for electron-builder to export)
 
-Deleting this file will:
+```bash
+npm run Piconfig
+```
 
-- Remove any pending telemetry packets
-- Reset the opt in/out state: the app should display the opt in/out modal on next launch
-- Remove the random client UUID: the app will generate a new one on next launch
+## 6. Install Project Dependencies
+
+Install the required packages using the following command:
+
+```bash
+npm install --unsafe-perm
+```
+
+## 7. Running the Application
+
+To start the application, use the following command:
+
+```bash
+npm run start
+```
+
+## 8. Build the Application
+
+To build the application, execute the following commands:
+
+```bash
+export USE_SYSTEM_FPM="true"
+NODE_OPTIONS=--max-old-space-size=4096 npm run dist:rpi64
+```
+
+## 9. Saving Modifications
+
+If you've made changes to StemHat files in the `ScratchVM` or `ScratchGUI`, save them with the following commands:
+
+```bash
+npm run Stemhat:save
+git add -A
+git commit -m "Your commit message"
+git push
+```
+
+---
+
+
+
+
