@@ -535,7 +535,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'set_MOTOR',
                     text: formatMessage({
                         id: 'pistemhat.set_MOTOR',
-                        default: 'set [MOTOR] at power [POWER]%',
+                        default: 'set [MOTOR] to [POWER]%',
                         description: 'set motor to power'
                     }),
                     blockType: BlockType.COMMAND,
@@ -555,7 +555,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'set_MOTOR_EACH',
                     text: formatMessage({
                         id: 'pistemhat.set_MOTOR_EACH',
-                        default: 'set left motor to [POWERM1]% and right motor to [POWERM2]%',
+                        default: 'set Left Motor to [POWERM1]% and Right Motor to [POWERM2]%',
                         description: 'set motor power to each motor'
                     }),
                     blockType: BlockType.COMMAND,
@@ -574,7 +574,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'stop_MOTOR',
                     text: formatMessage({
                         id: 'pistemhat.stop_MOTOR',
-                        default: 'Stop [MOTOR]',
+                        default: 'stop [MOTOR]',
                         description: 'Stop motor'
                     }),
                     blockType: BlockType.COMMAND,
@@ -610,7 +610,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'set_OLED',
                     text: formatMessage({
                         id: 'pistemhat.set_OLED',
-                        default: 'set OLED to [TEXT] at [ROW]',
+                        default: 'set OLED text to [TEXT] at row [ROW]',
                         description: 'set servo to position'
                     }),
                     blockType: BlockType.COMMAND,
@@ -630,7 +630,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'reset_OLED',
                     text: formatMessage({
                         id: 'pistemhat.reset_OLED',
-                        default: 'Clear OLED row [ROWDEL]',
+                        default: 'clear OLED row [ROWDEL]',
                         description: 'set servo to position'
                     }),
                     blockType: BlockType.COMMAND,
@@ -649,7 +649,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'get_button',
                     text: formatMessage({
                         id: 'pistemhat.get_button',
-                        default: 'get button [BUTTON] pressed state',
+                        default: 'get Button [BUTTON] state',
                         description: 'get the button pressed state'
                     }),
                     blockType: BlockType.BOOLEAN,
@@ -665,7 +665,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'get_analog',
                     text: formatMessage({
                         id: 'pistemhat.get_analog',
-                        default: 'get analog [ANALOG]',
+                        default: 'get Analog [ANALOG]',
                         description: 'get the analog reading 0-255'
                     }),
                     blockType: BlockType.REPORTER,
@@ -697,7 +697,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'get_humidity',
                     text: formatMessage({
                         id: 'pistemhat.get_humidity',
-                        default: 'get Humidity',
+                        default: 'get Humidity in percentage',
                         description: 'get the Humidity'
                     }),
                     blockType: BlockType.REPORTER
@@ -707,7 +707,7 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'get_ultrasonic',
                     text: formatMessage({
                         id: 'pistemhat.get_ultrasonic',
-                        default: 'get Ultrasonic Distance in CM',
+                        default: 'get Ultrasonic Sensor in cm',
                         description: 'get Ultrasonic Distance in CM'
                     }),
                     blockType: BlockType.REPORTER
@@ -728,7 +728,7 @@ class Scratch3PiSTEMHATBlocks {
                     items: ['Left Motor', 'Right Motor', 'Both Motors']
                 },
                 SERVOs: {
-                    acceptReporters: false,
+                    acceptReporters: true,
                     items: ['1', '2', '3', '4']
                 },
                 ROWs:
@@ -738,11 +738,11 @@ class Scratch3PiSTEMHATBlocks {
                 },
                 ROWDELs:
                 {
-                    acceptReporters: false,
+                    acceptReporters: true,
                     items: ['1', '2', '3', '4','All']
                 },
                 BUTTONs: {
-                    acceptReporters: false,
+                    acceptReporters: true,
                     items: ['5', '6']
                 },
                 ANALOGs: {
