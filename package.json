@@ -21,9 +21,9 @@
     "build:dir": "npm run compile && npm run doBuild -- --mode=dir",
     "build:dist": "npm run compile && npm run doBuild -- --mode=dist",
     "doBuild": "node ./scripts/electron-builder-wrapper.js",
-    "dist:rpi32": "npm run clean && npm run compile && npm run compile:cpp32 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
-    "dist:rpi64": "npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
-    "dist:dev64": "sudo apt remove scratch3 && sudo apt autoremove && npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
+    "dist:rpi32": "USE_SYSTEM_FPM=true NODE_OPTIONS=--max-old-space-size=4096 npm run clean && npm run compile && npm run compile:cpp32 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
+    "dist:rpi64": "USE_SYSTEM_FPM=true NODE_OPTIONS=--max-old-space-size=4096 npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
+    "dist:dev64": "sudo apt remove scratch3 && sudo apt autoremove && USE_SYSTEM_FPM=true NODE_OPTIONS=--max-old-space-size=4096  npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:i2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
     "postinstall": "git apply patches/*.patch && cd node_modules/scratch-blocks/ && npm i --ignore-scripts && npm exec -c \"python build.py\" && cd ../.. && npm run Stemhat:load"
