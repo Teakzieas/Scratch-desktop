@@ -10,6 +10,7 @@ Follow the steps below to set up and build Scratch Desktop on your system.
 ## 1. Install Node.js (Version 16)
 
 Use the following commands to install Node.js version 16 using NVM:
+
 To build reliably use Node 16.20.0 
 
 ```bash
