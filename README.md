@@ -33,6 +33,8 @@ cd scratch-desktop
 
 The following operations are performed by the Pi configuration script:
 
+\-- Enable I2C on Pi
+
 \-- Resize the Swap File to 2048 MB (in case a 4GB Pi does not have enough memory to build)
 
 \-- Install Java (required for google-closure-compiler)
