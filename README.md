@@ -78,7 +78,10 @@ git add -A
 git commit -m "Your commit message"
 git push
 ```
+## Notes
 
+- Ensure that I2C is enabled on the Raspberry Pi.
+- This setup was tested on a Raspberry Pi 4GB running Raspberry Pi OS 64-bit.
 ---
 
 
