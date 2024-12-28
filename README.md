@@ -70,6 +70,8 @@ export USE_SYSTEM_FPM="true"
 NODE_OPTIONS=--max-old-space-size=4096 npm run dist:rpi64
 ```
 
+build results are stored in Dist folder, .deb file
+
 ## 7. Saving Modifications
 
 If you've made changes to StemHat files in the `ScratchVM` or `ScratchGUI`, save them with the following commands:
