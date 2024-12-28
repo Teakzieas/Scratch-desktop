@@ -27,7 +27,7 @@ git clone https://github.com/Teakzieas/scratch-desktop.git
 cd scratch-desktop
 ```
 
-## 5. Run Pi Configuration
+## 3. Run Pi Configuration
 
 The following operations are performed by the Pi configuration script:
 
@@ -41,7 +41,7 @@ The following operations are performed by the Pi configuration script:
 npm run Piconfig
 ```
 
-## 6. Install Project Dependencies
+## 4. Install Project Dependencies
 
 Install the required packages using the following command:
 
@@ -49,7 +49,7 @@ Install the required packages using the following command:
 npm install --unsafe-perm
 ```
 
-## 7. Running the Application
+## 5. Running the Application
 
 To start the application, use the following command:
 
@@ -57,7 +57,7 @@ To start the application, use the following command:
 npm run start
 ```
 
-## 8. Build the Application
+## 6. Build the Application
 
 To build the application, execute the following commands:
 
@@ -66,7 +66,7 @@ export USE_SYSTEM_FPM="true"
 NODE_OPTIONS=--max-old-space-size=4096 npm run dist:rpi64
 ```
 
-## 9. Saving Modifications
+## 7. Saving Modifications
 
 If you've made changes to StemHat files in the `ScratchVM` or `ScratchGUI`, save them with the following commands:
 
