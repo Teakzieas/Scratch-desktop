@@ -56,7 +56,7 @@ import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 */}
 import pistemhatIconURL from './pistemhat/pistemhat.png';
-import pistemhatInsetIconURL from './pistemhat/pistemhat-small.svg';
+import pistemhatInsetIconURL from './pistemhat/pistemhat-small.png';
 
 export default [
     {
