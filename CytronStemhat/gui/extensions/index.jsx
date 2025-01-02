@@ -178,7 +178,8 @@ export default [
         ),
         featured: true
     },
-{
+{/*
+    {
         name: 'Raspberry Pi GPIO',
         extensionId: 'pigpio',
         collaborator: 'Raspberry Pi',
@@ -193,21 +194,7 @@ export default [
         ),
         featured: true
     },
-    {
-        name: 'Raspberry Pi STEMHAT',
-        extensionId: 'pistemhat',
-        collaborator: 'Cytron',
-        iconURL: pistemhatIconURL,
-        insetIconURL: pistemhatInsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Control Raspberry Pi STEMHAT lines"
-                description="Description for the 'Pi STEMHAT' extension"
-                id="gui.extension.stemhat.description"
-            />
-        ),
-        featured: true
-    },
+    
     {
         name: 'Raspberry Pi Sense HAT',
         extensionId: 'pisensehat',
@@ -390,4 +377,20 @@ export default [
         ),
         helpLink: 'https://scratch.mit.edu/vernier'
     }
+*/}
+    {
+        name: 'Raspberry Pi STEMHAT',
+        extensionId: 'pistemhat',
+        collaborator: 'Cytron',
+        iconURL: pistemhatIconURL,
+        insetIconURL: pistemhatInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Control Raspberry Pi STEMHAT lines"
+                description="Description for the 'Pi STEMHAT' extension"
+                id="gui.extension.stemhat.description"
+            />
+        ),
+        featured: true
+    },
 ];
