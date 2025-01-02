@@ -18,7 +18,7 @@ import translateInsetIconURL from './translate/translate-small.png';
 
 import makeymakeyIconURL from './makeymakey/makeymakey.png';
 import makeymakeyInsetIconURL from './makeymakey/makeymakey-small.svg';
-
+{/*
 import pigpioIconURL from './pigpio/pigpio.png';
 import pigpioInsetIconURL from './pigpio/pigpio-small.svg';
 
@@ -54,7 +54,7 @@ import gdxforIconURL from './gdxfor/gdxfor.png';
 import gdxforInsetIconURL from './gdxfor/gdxfor-small.svg';
 import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
-
+*/}
 import pistemhatIconURL from './pistemhat/pistemhat.png';
 import pistemhatInsetIconURL from './pistemhat/pistemhat-small.svg';
 
