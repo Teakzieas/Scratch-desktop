@@ -1,0 +1,1 @@
+cmd_Release/stemhat.node := ln -f "Release/obj.target/stemhat.node" "Release/stemhat.node" 2>/dev/null || (rm -rf "Release/stemhat.node" && cp -af "Release/obj.target/stemhat.node" "Release/stemhat.node")

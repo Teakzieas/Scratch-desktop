@@ -27,7 +27,7 @@ npm-*
 !/static/.gitignore
 /raspberry-pi/cpp/build/*
 /cpp/build/*
-/i2c/build/*
+/stemhatCpp/build/*
 
 #don't store the dist
 /scratch-dist

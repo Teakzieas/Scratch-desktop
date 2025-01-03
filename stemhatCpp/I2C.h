@@ -43,22 +43,6 @@ public:
         return true;
     }
     
-    bool writeData(const uint8_t* data, size_t length) const {
-        if (::write(i2c_fd, data, length) != static_cast<ssize_t>(length)) {
-            std::cerr << "Failed to write to the I2C device.\n";
-            return false;
-        }
-        return true;
-    }
-
-    // Read multiple bytes
-    bool readData(uint8_t* data, size_t length) const {
-        if (::read(i2c_fd, data, length) != static_cast<ssize_t>(length)) {
-            std::cerr << "Failed to read from the I2C device.\n";
-            return false;
-        }
-        return true;
-    }
  
     bool readFromRegister(uint8_t reg, uint8_t& data) const {
     // Write the register address to the device

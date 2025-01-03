@@ -2,15 +2,12 @@
 #include <node_api.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <chrono>
-#include <thread>
 
 extern "C" {
 #include "gpiolib.h"
 }
 
 int running = 0;
-
 
 // Check if GPIO library is running
 int is_running(){
@@ -119,104 +116,6 @@ int pull(int pinnum, int pull_mode)
 
     return EXIT_SUCCESS; 
 }
-
-
-// Read ultrasonic sensor distance
-int read_ultrasonic(int trig_pin, int echo_pin) {
-    if (is_running() == EXIT_FAILURE)
-        return EXIT_FAILURE;
-
-    // Set trigger pin as output and echo pin as input
-    gpio_set_fsel(trig_pin, GPIO_FSEL_OUTPUT);
-    gpio_set_fsel(echo_pin, GPIO_FSEL_INPUT);
-    gpio_set_pull(echo_pin, PULL_NONE);
-    
-
-    // Generate a 10-microsecond pulse on the trigger pin
-    gpio_set_drive(trig_pin, DRIVE_LOW);
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
-    gpio_set_drive(trig_pin, DRIVE_HIGH);
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
-    gpio_set_drive(trig_pin, DRIVE_LOW);
-
-    // Wait for the echo pin to go high
-    auto start_time = std::chrono::high_resolution_clock::now();
-    auto end_time = start_time;
-    
-    
-    while (gpio_get_level(echo_pin) == 0) {
-        end_time = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() > 300000) {
-            return -1; // Timeout waiting for echo to go high
-        }
-    }
-
-    // Measure the time the echo pin stays high
-    start_time = std::chrono::high_resolution_clock::now();
-    
-    while (gpio_get_level(echo_pin) == 1) {
-        end_time = std::chrono::high_resolution_clock::now();
-        if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() > 300000) {
-            return -1; // Timeout waiting for echo to go low
-        }
-    }
-
-    // Calculate the duration in microseconds
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-
-    // Calculate the distance in centimeters (speed of sound = 34300 cm/s)
-    int distance = duration / 58; // Divide by 58 to convert to cm
-
-    return distance;
-}
-
-
-// Node.js wrapper for read_ultrasonic function
-napi_value ReadUltrasonic(napi_env env, napi_callback_info info) {
-    napi_status status;
-
-    size_t argc = 2;
-    napi_value args[argc];
-    status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-    assert(status == napi_ok);
-
-    if (argc < 2) {
-        napi_throw_type_error(env, nullptr, "Wrong number of arguments");
-        return nullptr;
-    }
-
-    napi_valuetype trig_valuetype;
-    napi_valuetype echo_valuetype;
-
-    status = napi_typeof(env, args[0], &trig_valuetype);
-    assert(status == napi_ok);
-
-    status = napi_typeof(env, args[1], &echo_valuetype);
-    assert(status == napi_ok);
-
-    if (trig_valuetype != napi_number || echo_valuetype != napi_number) {
-        napi_throw_type_error(env, nullptr, "Wrong arguments");
-        return nullptr;
-    }
-
-    int trig_pin;
-    int echo_pin;
-
-    status = napi_get_value_int32(env, args[0], &trig_pin);
-    assert(status == napi_ok);
-
-    status = napi_get_value_int32(env, args[1], &echo_pin);
-    assert(status == napi_ok);
-
-    int distance = read_ultrasonic(trig_pin, echo_pin);
-
-    napi_value n_distance;
-    status = napi_create_int32(env, distance, &n_distance);
-    assert(status == napi_ok);
-
-    return n_distance;
-}
-
 
 // NodeJS GPIO toggle function
 napi_value Toggle(napi_env env, napi_callback_info info) {
@@ -424,13 +323,8 @@ napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor addDescriptor3 = DECLARE_NAPI_METHOD("pull", Pull);
     status = napi_define_properties(env, exports, 1, &addDescriptor3);
     assert(status == napi_ok);
-    
-    napi_property_descriptor addDescriptor4 = DECLARE_NAPI_METHOD("readUltrasonic", ReadUltrasonic);
-    status = napi_define_properties(env, exports, 1, &addDescriptor4);
-    assert(status == napi_ok);
 
     return exports;
 }
 
 NAPI_MODULE(NODE_GYP_MODULE_NAME, Init)
-
