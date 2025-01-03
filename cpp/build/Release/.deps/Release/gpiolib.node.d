@@ -1,1 +1,0 @@
-cmd_Release/gpiolib.node := ln -f "Release/obj.target/gpiolib.node" "Release/gpiolib.node" 2>/dev/null || (rm -rf "Release/gpiolib.node" && cp -af "Release/obj.target/gpiolib.node" "Release/gpiolib.node")
