@@ -4,15 +4,21 @@ const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const path = window.require('path');
 
+const gpio = window.require(path.join(__static, 'gpiolib.node'))
 const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
 
-const gpio = window.require(path.join(__static, 'gpiolib.node'))
+
 //Ultrasonic Sensor
 var cachedUltrasonicValue = -1;
-var lastReadTime = 0;
+var lastReadTime1 = 0;
 
+var cachedHumidityValue = -1;
+var lastReadTime2 = 0;
+
+var cachedTemperatureValue = -1;
+var lastReadTime3 = 0;
 
 //Motor Controller
 function scaleTo255(value) {
@@ -587,13 +593,9 @@ class Scratch3PiSTEMHATBlocks {
         }
         
         
-        let value = stemhat.I2creadFromRegister(device, register);
-        return value;
-                
-        // Filtering Incase Sensor False Results
-        //remove above to enable filtering
+        
         let readings = [];
-        for (let i = 0; i < 5; i++) 
+        for (let i = 0; i < 3; i++) 
         {
 			let value1 = stemhat.I2creadFromRegister(device, register);
             readings.push(value1);
@@ -606,24 +608,42 @@ class Scratch3PiSTEMHATBlocks {
 
     get_temp(args)
     {
-        return stemhat.AHT20Read(0).toFixed(1);
+        const currentTime = Date.now();
+        if (currentTime - lastReadTime3 > 100) {
+            var temp = stemhat.AHT20Read(0).toFixed(1);
+            if(temp != -1)
+            {
+                cachedTemperatureValue = temp
+            }
+            lastReadTime3 = currentTime;
+        }
+        return cachedTemperatureValue;  
     }
     
     get_humidity(args)
     {
-        return stemhat.AHT20Read(1).toFixed(1);
+        const currentTime = Date.now();
+        if (currentTime - lastReadTime2 > 100) {
+            var temp = stemhat.AHT20Read(1).toFixed(1);
+            if(temp != -1)
+            {
+                cachedHumidityValue = temp
+            }
+            lastReadTime2 = currentTime;
+        }
+        return cachedHumidityValue;  
     }
 
     get_ultrasonic(args) 
     {
         const currentTime = Date.now();
-        if (currentTime - lastReadTime > 100) {
+        if (currentTime - lastReadTime1 > 100) {
             var temp = stemhat.UltrasonicRead();
             if(temp != -1)
             {
                 cachedUltrasonicValue = temp
             }
-            lastReadTime = currentTime;
+            lastReadTime1 = currentTime;
         }
         return cachedUltrasonicValue;
     }
