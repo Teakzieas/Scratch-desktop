@@ -373,11 +373,16 @@ class Scratch3PiSTEMHATBlocks {
 
     set_BUZZER(args) 
     {
-        let drive = 0;
-        if (Cast.toString(args.STATE) == "ON")
-            drive = 1;
-
-        gpio.set(19, drive);
+        
+        if (Cast.toString(args.STATE) == "ON")   
+        {
+			stemhat.BuzzerSet(1000,128);
+		}
+		else
+		{
+			stemhat.BuzzerSet(1000,0);
+		}
+        
     }
 
     stop_MOTOR(args) 
