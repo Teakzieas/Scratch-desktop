@@ -122,17 +122,26 @@ class Scratch3PiSTEMHATBlocks {
                     opcode: 'set_BUZZER',
                     text: formatMessage({
                         id: 'pistemhat.set_BUZZER',
-                        default: 'set Buzzer to [STATE]',
+                        default: 'set Buzzer Frequency to [FREQ]',
                         description: 'set the buzzer to state'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        STATE: {
-                            type: ArgumentType.STRING,
-                            menu: 'STATEs',
-                            defaultValue: 'ON'
+                        FREQ: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '50'
                         }
                     }
+                },
+                {
+                    opcode: 'stop_BUZZER',
+                    text: formatMessage({
+                        id: 'pistemhat.stop_BUZZER',
+                        default: 'Stop Buzzer',
+                        description: 'Stop the buzzer to state'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    
                 },
                 {
                     opcode: 'set_MOTOR',
@@ -345,6 +354,13 @@ class Scratch3PiSTEMHATBlocks {
                 ANALOGs: {
                     acceptReporters: false,
                     items: ['AN0', 'AN1', 'Light Sensor', 'Vin Voltage']
+                },
+                NOTEs: {
+                    acceptReporters: true,
+                    items: [
+                        'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4',
+                        'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5', 'OFF'
+                    ]
                 }
             }
         };
@@ -380,18 +396,13 @@ class Scratch3PiSTEMHATBlocks {
         stemhat.I2cwriteToRegister(device, register3, colour[2]);
     }
 
-    set_BUZZER(args) 
-    {
+    set_BUZZER(args) {
+        const frequency = Cast.toNumber(args.FREQ);
+        stemhat.BuzzerSet(frequency, 128);
+    }
+    stop_BUZZER(args) {
         
-        if (Cast.toString(args.STATE) == "ON")   
-        {
-			stemhat.BuzzerSet(1000,128);
-		}
-		else
-		{
-			stemhat.BuzzerSet(1000,0);
-		}
-        
+        stemhat.BuzzerSet(0, 0);
     }
 
     stop_MOTOR(args) 
