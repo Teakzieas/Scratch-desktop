@@ -12,7 +12,7 @@ var sudo = window.require('sudo-prompt');
 var options = {
   name: 'Electron',
 };
-sudo.exec('killall pigpiod || pigpiod', options,
+sudo.exec('pigpiod', options,
   function(error, stdout, stderr) {
     if (error) throw error;
     console.log('stdout: ' + stdout);
