@@ -8,7 +8,16 @@ const gpio = window.require(path.join(__static, 'gpiolib.node'))
 const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
-
+var sudo = window.require('sudo-prompt');
+var options = {
+  name: 'Electron',
+};
+sudo.exec('killall pigpiod || pigpiod', options,
+  function(error, stdout, stderr) {
+    if (error) throw error;
+    console.log('stdout: ' + stdout);
+  }
+);
 
 //Ultrasonic Sensor
 var cachedUltrasonicValue = -1;

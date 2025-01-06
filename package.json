@@ -6,7 +6,7 @@
   "version": "3.30.9-DivV2",
   "license": "BSD-3-Clause",
   "scripts": {
-    "Piconfig":"sudo raspi-config nonint do_i2c 0 && sudo dphys-swapfile swapoff && sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile  &&sudo dphys-swapfile setup && sudo dphys-swapfile swapon && sudo apt install default-jdk && sudo apt-get install ruby-full && sudo gem install fpm",
+    "Piconfig": "sudo raspi-config nonint do_i2c 0 && sudo dphys-swapfile swapoff && sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile  &&sudo dphys-swapfile setup && sudo dphys-swapfile swapon && sudo apt install default-jdk && sudo apt-get install ruby-full && sudo gem install fpm",
     "Stemhat:save": "mkdir -p CytronStemhat/vm/extension-support  CytronStemhat/vm/extensions  CytronStemhat/gui/extensions && cp -r node_modules/scratch-vm/src/extensions/scratch3_pistemhat CytronStemhat/vm/extensions/ && cp node_modules/scratch-vm/src/extension-support/extension-manager.js CytronStemhat/vm/extension-support/ && cp -r node_modules/scratch-gui/src/lib/libraries/extensions/pistemhat CytronStemhat/gui/extensions/&& cp node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx CytronStemhat/gui/extensions/",
     "Stemhat:load": "cp -r CytronStemhat/vm/extensions/scratch3_pistemhat node_modules/scratch-vm/src/extensions/ && cp CytronStemhat/vm/extension-support/extension-manager.js node_modules/scratch-vm/src/extension-support/ && cp -r CytronStemhat/gui/extensions/pistemhat node_modules/scratch-gui/src/lib/libraries/extensions/ && cp CytronStemhat/gui/extensions/index.jsx node_modules/scratch-gui/src/lib/libraries/extensions/",
     "clean": "rimraf ./dist ./static/assets",
@@ -33,7 +33,8 @@
     "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
   },
   "dependencies": {
-    "source-map-support": "^0.5.19"
+    "source-map-support": "^0.5.19",
+    "sudo-prompt": "^9.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
