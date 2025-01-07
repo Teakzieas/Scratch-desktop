@@ -9,15 +9,71 @@ const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
 var sudo = window.require('sudo-prompt');
-var options = {
-  name: 'Electron',
-};
-sudo.exec('pigpiod', options,
-  function(error, stdout, stderr) {
-    if (error) throw error;
-    console.log('stdout: ' + stdout);
+const { exec } = require('child_process');
+
+
+exec('crontab -l 2>/dev/null | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
+  if (error) {
+    console.error(`Error checking crontab: ${error.message}`);
+    return;
   }
-);
+
+  if (stderr) {
+    console.error(`Error: ${stderr}`);
+    return;
+  }
+
+  if (stdout.trim() === '0') 
+  {
+    // 'pigpiod' is not in the crontab, add it
+    console.log("Adding 'pigpiod' to crontab...");
+    exec('(crontab -l 2>/dev/null; echo "@reboot sudo pigpiod") | crontab -', (addError, addStdout, addStderr) => {
+      if (addError) {
+        console.error(`Error adding to crontab: ${addError.message}`);
+        return;
+      }
+
+      if (addStderr) {
+        console.error(`Error: ${addStderr}`);
+        return;
+      }
+
+      console.log("'pigpiod' added to crontab successfully.");
+    });
+  } else {
+    console.log("'pigpiod' is already in the crontab.");
+  }
+});
+
+
+exec('ps aux | grep -v grep | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
+  if (error) {
+    console.error(`Error checking pigpiod status: ${error.message}`);
+    return;
+  }
+
+  if (stderr) {
+    console.error(`Error: ${stderr}`);
+    return;
+  }
+
+  if (stdout.trim() === '0') 
+  {
+    var options = {
+      name: 'Electron',
+    };
+    sudo.exec('pigpiod', options,
+      function(error, stdout, stderr) {
+        if (error) throw error;
+        console.log('stdout: ' + stdout);
+      }
+    );
+  } else {
+    console.log('pigpiod is already running.');
+  }
+});
+
+
 
 //Ultrasonic Sensor
 var cachedUltrasonicValue = -1;
