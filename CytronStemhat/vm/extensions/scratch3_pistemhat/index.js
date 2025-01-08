@@ -79,6 +79,15 @@ exec('ps aux | grep -v grep | grep -q pigpiod && echo 1 || echo 0', (error, stdo
 var cachedUltrasonicValue = -1;
 var lastReadTime1 = 0;
 
+async function updateUltrasonicCache() {
+    const temp = await stemhat.UltrasonicRead();
+    if (temp !== -1) {
+        cachedUltrasonicValue = temp;
+    }
+    lastReadTime1 = Date.now();
+    
+}
+
 var cachedHumidityValue = -1;
 var lastReadTime2 = 0;
 
@@ -715,16 +724,12 @@ class Scratch3PiSTEMHATBlocks {
         return cachedHumidityValue;  
     }
 
-    get_ultrasonic(args) 
-    {
+
+    async get_ultrasonic(args) {
         const currentTime = Date.now();
-        if (currentTime - lastReadTime1 > 100) {
-            var temp = stemhat.UltrasonicRead();
-            if(temp != -1)
-            {
-                cachedUltrasonicValue = temp
-            }
-            lastReadTime1 = currentTime;
+        if (currentTime - lastReadTime1 > 100) 
+        {
+            updateUltrasonicCache();
         }
         return cachedUltrasonicValue;
     }
