@@ -7,7 +7,6 @@
 #include <chrono>
 #include <thread>
 #include "I2C.h"
-#include "OLED.h"
 #include "AHT20.h"
 
 extern "C" {
@@ -276,84 +275,6 @@ napi_value I2cReadFromRegister(napi_env env, napi_callback_info info) {
 
 
 
-napi_value OLEDInit(napi_env env, napi_callback_info info) {
-    size_t argc = 0;
-    napi_value args[0];
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-    if (argc != 0) {
-        ThrowJavaScriptError(env, "Expecting No input");
-        return nullptr;
-    }
-
-    // Perform the read operation
-    bool success = OLEDInit();    
-
-    napi_value result;
-    napi_get_boolean(env, success, &result);
-    return result;
-}
-
-napi_value OLEDText(napi_env env, napi_callback_info info) {
-    size_t argc = 2;  // Expecting two arguments: text and row
-    napi_value args[2];
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-    if (argc != 2) {
-        ThrowJavaScriptError(env, "Expecting 2 inputs: text (string) and row (integer)");
-        return nullptr;
-    }
-
-    // Extract the first argument (text)
-    size_t text_length;
-    napi_get_value_string_utf8(env, args[0], nullptr, 0, &text_length);
-    std::string text(text_length, '\0');
-    napi_get_value_string_utf8(env, args[0], &text[0], text_length + 1, nullptr);
-
-    // Extract the second argument (row)
-    int32_t row;
-    napi_get_value_int32(env, args[1], &row);
-
-    // Call the native function
-    int result = OLEDText(text, row);
-
-    if (result != 0) {
-        ThrowJavaScriptError(env, "Failed to write text to OLED display");
-        return nullptr;
-    }
-
-    napi_value napi_result;
-    napi_get_boolean(env, true, &napi_result);
-    return napi_result;
-}
-
-napi_value OLEDClear(napi_env env, napi_callback_info info) {
-    size_t argc = 1;  // Expecting one argument: row
-    napi_value args[1];
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-    if (argc != 1) {
-        ThrowJavaScriptError(env, "Expecting 1 input: row (integer)");
-        return nullptr;
-    }
-
-    // Extract the argument (row)
-    int32_t row;
-    napi_get_value_int32(env, args[0], &row);
-
-    // Call the native function
-    int result = OLEDClear(row);
-
-    if (result != 0) {
-        ThrowJavaScriptError(env, "Failed to clear the OLED display");
-        return nullptr;
-    }
-
-    napi_value napi_result;
-    napi_get_boolean(env, true, &napi_result);
-    return napi_result;
-}
-
 napi_value AHT20Read(napi_env env, napi_callback_info info) {
     size_t argc = 1;  // Expecting one argument: type
     napi_value args[1];
@@ -387,7 +308,7 @@ napi_value AHT20Read(napi_env env, napi_callback_info info) {
 
 
 napi_value Init(napi_env env, napi_value exports) {
-    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn, I2creadFromRegisterFn, OLEDInitFn, OLEDTextFn, OLEDClearFn,AHT20ReadFn,UltrasonicReadFn,BuzzerSetFn;
+    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadFn,UltrasonicReadFn,BuzzerSetFn;
 
     napi_create_function(env, nullptr, 0, I2cCreateDevice, nullptr, &I2ccreateDeviceFn);
     napi_set_named_property(env, exports, "I2ccreateDevice", I2ccreateDeviceFn);
@@ -397,15 +318,6 @@ napi_value Init(napi_env env, napi_value exports) {
 
     napi_create_function(env, nullptr, 0, I2cReadFromRegister, nullptr, &I2creadFromRegisterFn);
     napi_set_named_property(env, exports, "I2creadFromRegister", I2creadFromRegisterFn);
-    
-    napi_create_function(env, nullptr, 0, OLEDInit, nullptr, &OLEDInitFn);
-    napi_set_named_property(env, exports, "OLEDInit", OLEDInitFn);
-    
-    napi_create_function(env, nullptr, 0, OLEDText, nullptr, &OLEDTextFn);
-    napi_set_named_property(env, exports, "OLEDText", OLEDTextFn);
-    
-    napi_create_function(env, nullptr, 0, OLEDClear, nullptr, &OLEDClearFn);
-    napi_set_named_property(env, exports, "OLEDClear", OLEDClearFn);
     
     napi_create_function(env, nullptr, 0, AHT20Read, nullptr, &AHT20ReadFn);
     napi_set_named_property(env, exports, "AHT20Read", AHT20ReadFn);

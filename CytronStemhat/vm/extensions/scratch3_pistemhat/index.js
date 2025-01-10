@@ -10,6 +10,10 @@ const gpio = window.require(path.join(__static, 'gpiolib.node'))
 const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
+const i2c = require('i2c-bus');
+const oled = window.require(path.join(__static, 'oled.js'));
+const font = window.require(path.join(__static, 'oled-font.js'));
+
 var sudo = window.require('sudo-prompt');
 const { exec } = require('child_process');
 
@@ -97,37 +101,22 @@ function writeLog(message) {
 //////////////////////////////////////////////////////////////////
 //OLED MODULE INIT
 //////////////////////////////////////////////////////////////////
-let i2c, oled, font,oledDisplay;
-try {
-    i2c = require('i2c-bus');
-    oled = require('oled-i2c-bus');
-    font = require('oled-font-5x7');
-    console.log('Modules loaded successfully.');
-} catch (error) {
-    console.log(`Error loading modules: ${error.message}`);
-}
+const i2cBus = i2c.openSync(1);
+const opts = {
+                width: 128,
+                height: 64,
+                address: 0x3C
+             };
 
-try {
-    const i2cBus = i2c.openSync(1);
-    const opts = {
-    width: 128,
-    height: 64,
-    address: 0x3C
-    };
-
-    oledDisplay = new oled(i2cBus, opts);
-    oledDisplay.clearDisplay();
-    oledDisplay.turnOnDisplay();
-} catch (error) {
-    console.log(`Error Part 2: ${error.message}`);
-}
+oledDisplay = new oled(i2cBus, opts);
+oledDisplay.clearDisplay();
+oledDisplay.turnOnDisplay();
 //////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////
 //DISPLAY SPRITE FOR OLED
 //////////////////////////////////////////////////////////////////
-// Function to scale the image maintaining the aspect ratio
 function scaleImageToFitAspectRatio(image, targetWidth, targetHeight) {
     const originalWidth = image.width;
     const originalHeight = image.height;
