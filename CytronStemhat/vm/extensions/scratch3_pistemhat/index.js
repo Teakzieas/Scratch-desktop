@@ -2,7 +2,9 @@ const formatMessage = require('format-message');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
+const RenderedTarget = require('../../sprites/rendered-target');
 const path = window.require('path');
+const fs = window.require('fs');
 
 const gpio = window.require(path.join(__static, 'gpiolib.node'))
 const stemhat = window.require(path.join(__static, 'stemhat.node'));
@@ -12,81 +14,304 @@ var sudo = window.require('sudo-prompt');
 const { exec } = require('child_process');
 
 
+//To Request Permission for GPIOD 
 exec('crontab -l 2>/dev/null | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error checking crontab: ${error.message}`);
-    return;
-  }
+    if (error) {
+      console.error(`Error checking crontab: ${error.message}`);
+      return;
+    }
+  
+    if (stderr) {
+      console.error(`Error: ${stderr}`);
+      return;
+    }
+  
+    if (stdout.trim() === '0') 
+    {
+      // 'pigpiod' is not in the crontab, add it
+      console.log("Adding 'pigpiod' to crontab...");
+      exec('(crontab -l 2>/dev/null; echo "@reboot sudo pigpiod") | crontab -', (addError, addStdout, addStderr) => {
+        if (addError) {
+          console.error(`Error adding to crontab: ${addError.message}`);
+          return;
+        }
+  
+        if (addStderr) {
+          console.error(`Error: ${addStderr}`);
+          return;
+        }
+  
+        console.log("'pigpiod' added to crontab successfully.");
+      });
+    } else {
+      console.log("'pigpiod' is already in the crontab.");
+    }
+  });
+  
+  exec('ps aux | grep -v grep | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error checking pigpiod status: ${error.message}`);
+      return;
+    }
+  
+    if (stderr) {
+      console.error(`Error: ${stderr}`);
+      return;
+    }
+  
+    if (stdout.trim() === '0') 
+    {
+      var options = {
+        name: 'Electron',
+      };
+      sudo.exec('pigpiod', options,
+        function(error, stdout, stderr) {
+          if (error) throw error;
+          console.log('stdout: ' + stdout);
+        }
+      );
+    } else {
+      console.log('pigpiod is already running.');
+    }
+  });
+  
 
-  if (stderr) {
-    console.error(`Error: ${stderr}`);
-    return;
-  }
 
-  if (stdout.trim() === '0') 
-  {
-    // 'pigpiod' is not in the crontab, add it
-    console.log("Adding 'pigpiod' to crontab...");
-    exec('(crontab -l 2>/dev/null; echo "@reboot sudo pigpiod") | crontab -', (addError, addStdout, addStderr) => {
-      if (addError) {
-        console.error(`Error adding to crontab: ${addError.message}`);
-        return;
-      }
+//////////////////////////////////////////////////////////////////
+//TESTING FOR Logs
+//////////////////////////////////////////////////////////////////
+function writeLog(message) {
+    const logFilePath = path.join(__static, 'log'); // Path to the 'log' file
 
-      if (addStderr) {
-        console.error(`Error: ${addStderr}`);
-        return;
-      }
-
-      console.log("'pigpiod' added to crontab successfully.");
+    fs.appendFile(logFilePath, `${message}\n`, 'utf8', (err) => {
+        if (err) {
+            console.error('Error appending to log file:', err);
+        } else {
+            console.log('Message appended to log file:', message);
+        }
     });
-  } else {
-    console.log("'pigpiod' is already in the crontab.");
-  }
-});
+}
+//////////////////////////////////////////////////////////////////
 
 
-exec('ps aux | grep -v grep | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error checking pigpiod status: ${error.message}`);
-    return;
-  }
+//////////////////////////////////////////////////////////////////
+//OLED MODULE INIT
+//////////////////////////////////////////////////////////////////
+let i2c, oled, font,oledDisplay;
+try {
+    i2c = require('i2c-bus');
+    oled = require('oled-i2c-bus');
+    font = require('oled-font-5x7');
+    console.log('Modules loaded successfully.');
+} catch (error) {
+    console.log(`Error loading modules: ${error.message}`);
+}
 
-  if (stderr) {
-    console.error(`Error: ${stderr}`);
-    return;
-  }
-
-  if (stdout.trim() === '0') 
-  {
-    var options = {
-      name: 'Electron',
+try {
+    const i2cBus = i2c.openSync(1);
+    const opts = {
+    width: 128,
+    height: 64,
+    address: 0x3C
     };
-    sudo.exec('pigpiod', options,
-      function(error, stdout, stderr) {
-        if (error) throw error;
-        console.log('stdout: ' + stdout);
-      }
-    );
-  } else {
-    console.log('pigpiod is already running.');
-  }
-});
+
+    oledDisplay = new oled(i2cBus, opts);
+    oledDisplay.clearDisplay();
+    oledDisplay.turnOnDisplay();
+} catch (error) {
+    console.log(`Error Part 2: ${error.message}`);
+}
+//////////////////////////////////////////////////////////////////
 
 
+//////////////////////////////////////////////////////////////////
+//DISPLAY SPRITE FOR OLED
+//////////////////////////////////////////////////////////////////
+// Function to scale the image maintaining the aspect ratio
+function scaleImageToFitAspectRatio(image, targetWidth, targetHeight) {
+    const originalWidth = image.width;
+    const originalHeight = image.height;
 
-//Ultrasonic Sensor
+    // Calculate the scaling factor for width and height
+    const scaleX = targetWidth / originalWidth;
+    const scaleY = targetHeight / originalHeight;
+
+    // Choose the smaller scale factor to maintain aspect ratio
+    const scale = Math.min(scaleX, scaleY);
+
+    // Calculate the new width and height based on the scale factor
+    const newWidth = Math.floor(originalWidth * scale);
+    const newHeight = Math.floor(originalHeight * scale);
+
+    // Create a new array for the scaled image data
+    let scaledBitmap = [];
+
+    // Loop through each pixel of the target (scaled) image
+    for (let y = 0; y < newHeight; y++) {
+        for (let x = 0; x < newWidth; x++) {
+            // Find the corresponding position in the original image
+            const origX = Math.floor(x / scale);
+            const origY = Math.floor(y / scale);
+
+            // Calculate the index in the original image data
+            const index = (origY * originalWidth + origX) * 4;
+
+            // Get the RGBA values from the original image
+            const r = image.data[index];
+            const g = image.data[index + 1];
+            const b = image.data[index + 2];
+            const a = image.data[index + 3];
+
+            // Add the RGBA values to the scaled bitmap
+            scaledBitmap.push(r, g, b, a);
+        }
+    }
+
+    return {
+        width: newWidth,
+        height: newHeight,
+        data: scaledBitmap
+    };
+}
+
+function scaleImageToFit(image, targetWidth, targetHeight) {
+    const originalWidth = image.width;
+    const originalHeight = image.height;
+    const scaleX = targetWidth / originalWidth;
+    const scaleY = targetHeight / originalHeight;
+
+    // Create a new array for the scaled image data
+    let scaledBitmap = [];
+
+    // Loop through each pixel of the target (scaled) image
+    for (let y = 0; y < targetHeight; y++) {
+        for (let x = 0; x < targetWidth; x++) {
+            // Find the corresponding position in the original image
+            const origX = Math.floor(x / scaleX);
+            const origY = Math.floor(y / scaleY);
+
+            // Calculate the index in the original image data
+            const index = (origY * originalWidth + origX) * 4;
+            
+            // Get the RGBA values from the original image
+            const r = image.data[index];
+            const g = image.data[index + 1];
+            const b = image.data[index + 2];
+            const a = image.data[index + 3];
+
+            // Add the RGBA values to the scaled bitmap
+            scaledBitmap.push(r, g, b, a);
+        }
+    }
+
+    return {
+        width: targetWidth,
+        height: targetHeight,
+        data: scaledBitmap
+    };
+}
+
+function DrawSpriteBitmap(runtime,spriteName,x,y,scale) {
+    // Ensure the runtime and renderer are available
+    if (!runtime || !runtime.renderer) {
+        return;
+    }
+
+    // Get the currently editing target (the selected sprite)
+    const currentTarget = runtime.targets.find(target => target.getName() === spriteName);
+    if (!currentTarget) {
+        return;
+    }
+    
+
+    // Get the drawable ID of the current target
+    const drawableID = currentTarget.drawableID;
+    if (drawableID === undefined) {
+        return;
+    }
+
+    // Access the drawable object
+    const drawable = runtime.renderer._allDrawables[drawableID];
+    if (!drawable) {
+        return;
+    }
+
+    // Access the skin associated with the drawable
+    const skin = drawable.skin;
+    if (!skin) {
+        return;
+    }
+    else
+    {
+        
+        const silhouette = skin._silhouette;
+        const height = silhouette._height;
+        const width = silhouette._width;
+        const colorData = silhouette._colorData;
+    
+        if (!colorData) {
+            return;
+        }
+    
+        // Create an array to hold the final bitmap data (each pixel is 4 values: R, G, B, A)
+        let bitmap = [];
+    
+        // Iterate over the colorData and assign RGBA values to bitmap
+        for (let i = 0; i < colorData.length; i += 4) {
+            // Assuming color data comes in a sequential order of R, G, B, A
+            const r = colorData[i];
+            const g = colorData[i + 1];
+            const b = colorData[i + 2];
+            const a = colorData[i + 3];
+    
+            // Add the pixel data (RGBA) to the bitmap array
+            bitmap.push(r, g, b, a);
+        }
+    
+        
+        if(scale == 1){
+            const image = {
+                width: width,
+                height: height,
+                data: bitmap
+              };
+
+            var scaledImage = scaleImageToFit(image, 128, 64);
+              
+            oledDisplay.drawRGBAImage(scaledImage,x,y);
+
+        } 
+        else if(scale == 2){
+            const image = {
+                width: width,
+                height: height,
+                data: bitmap
+              };
+
+            var scaledImage = scaleImageToFitAspectRatio(image, 128, 64);
+              
+            oledDisplay.drawRGBAImage(scaledImage,x,y);
+
+        } 
+        else{
+            const image = {
+                width: width,
+                height: height,
+                data: bitmap
+              };
+              
+            oledDisplay.drawRGBAImage(image,x,y);
+
+        }
+
+        
+       
+    }
+}
+//////////////////////////////////////////////////////////////////
+
 var cachedUltrasonicValue = -1;
 var lastReadTime1 = 0;
-
-async function updateUltrasonicCache() {
-    const temp = await stemhat.UltrasonicRead();
-    if (temp !== -1) {
-        cachedUltrasonicValue = temp;
-    }
-    lastReadTime1 = Date.now();
-    
-}
 
 var cachedHumidityValue = -1;
 var lastReadTime2 = 0;
@@ -102,8 +327,6 @@ function scaleTo255(value) {
     return Math.round((value / 100) * 255);
 }
 
-//OLED 
-stemhat.OLEDInit()
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -284,10 +507,10 @@ class Scratch3PiSTEMHATBlocks {
                     }
                 },
                 {
-                    opcode: 'set_OLED',
+                    opcode: 'set_OLED_Text',
                     text: formatMessage({
-                        id: 'pistemhat.set_OLED',
-                        default: 'set OLED text to [TEXT] at row [ROW]',
+                        id: 'pistemhat.set_OLED_Text',
+                        default: 'set OLED text to [TEXT] at X[X1], Y[Y1] size[SIZE]  [WRAP]',
                         description: 'set servo to position'
                     }),
                     blockType: BlockType.COMMAND,
@@ -296,31 +519,211 @@ class Scratch3PiSTEMHATBlocks {
                             type: ArgumentType.STRING,
                             defaultValue: 'Hello'
                         },
-                        ROW: {
+                        X1: {
                             type: ArgumentType.NUMBER,
-                            menu: 'ROWs',
+                            defaultValue: '0'
+                        },
+                        Y1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        SIZE: {
+                            type: ArgumentType.NUMBER,
                             defaultValue: '1'
-                        }
+                        },
+                        WRAP: {
+                            type: ArgumentType.String,
+                            menu: 'WRAPs',
+                            defaultValue: 'Wrap'
+                        }  
                     }
                 },
                 {
-                    opcode: 'reset_OLED',
+                    opcode: 'set_OLED_Pixel',
                     text: formatMessage({
-                        id: 'pistemhat.reset_OLED',
-                        default: 'clear OLED row [ROWDEL]',
+                        id: 'pistemhat.set_OLED_Pixel',
+                        default: 'set OLED Pixel at X[X1], Y[Y1] to [STATE]',
                         description: 'set servo to position'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        TEXT: {
-                            type: ArgumentType.STRING
+                        X1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
                         },
-                        ROWDEL: {
+                        Y1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        STATE: {
                             type: ArgumentType.STRING,
-                            menu: 'ROWDELs',
-                            defaultValue: 'All'
+                            menu: 'STATEs',
+                            defaultValue: 'ON'
                         }
                     }
+                },
+                {
+                    opcode: 'set_OLED_Line',
+                    text: formatMessage({
+                        id: 'pistemhat.set_OLED_Line',
+                        default: 'draw line on OLED at X1[X1], Y1[Y1] to X2[X2], Y2[Y2]',
+                        description: 'draw a circle on the OLED display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        X1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        Y1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        X2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        },
+                        Y2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        }
+                    }
+                },
+                {
+                    opcode: 'set_OLED_Circle',
+                    text: formatMessage({
+                        id: 'pistemhat.set_OLED_Circle',
+                        default: 'draw circle on OLED at center X[X1], Y[Y1] with radius [RADIUS] [SOLID]',
+                        description: 'draw a circle on the OLED display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        X1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '50'
+                        },
+                        Y1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '50'
+                        },
+                        RADIUS: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        },
+                        SOLID: {
+                            type: ArgumentType.String,
+                            menu: 'SOLIDs',
+                            defaultValue: 'Solid'
+                        }
+                    }
+                },
+                {
+                    opcode: 'set_OLED_Rectangle',
+                    text: formatMessage({
+                        id: 'pistemhat.set_OLED_Rectangle',
+                        default: 'draw rectangle on OLED at X1[X1], Y1[Y1] Height[HEIGHT] Width[WIDTH] [SOLID]',
+                        description: 'draw a rectangle on the OLED display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        X1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        Y1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        HEIGHT: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        },
+                        WIDTH: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        },
+                        SOLID: {
+                            type: ArgumentType.String,
+                            menu: 'SOLIDs',
+                            defaultValue: 'Solid'
+                        }
+                    }
+                },
+                {
+                    opcode: 'set_OLED_Sprite',
+                    text: formatMessage({
+                        id: 'pistemhat.set_OLED_Sprite',
+                        default: 'draw [SPRITE] on OLED at X[X], Y[Y] [SCALE]',
+                        description: 'draw a sprite on the OLED display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        X: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        Y: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        SCALE: {
+                            type: ArgumentType.String,
+                            menu: 'SCALEs',
+                            defaultValue: 'Fit'
+                        },
+                        SPRITE: {
+                            type: ArgumentType.STRING,
+                            menu: 'SPRITEs',
+                            defaultValue: 'Sprite1'
+                        }
+                    }
+
+
+                },
+                {
+                    opcode: 'set_OLED_Scroll',
+                    text: formatMessage({
+                        id: 'pistemhat.set_OLED_Scroll',
+                        default: 'scroll OLED to [DIR] from Row [START] to Row[END]',
+                        description: 'scroll the OLED display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        DIR: {
+                            type: ArgumentType.String,
+                            menu: 'DIRs',
+                            defaultValue: 'right'
+                        },
+                        START: {
+                            type: ArgumentType.String,
+                            menu: 'ROWs',
+                            defaultValue: '0'
+                        },
+                        END: {
+                            type: ArgumentType.String,
+                            menu: 'ROWs',
+                            defaultValue: '7'
+                        }
+                    } 
+                },
+                {
+                    opcode: 'stop_OLED_Scroll',
+                    text: formatMessage({
+                        id: 'pistemhat.stop_OLED_Scroll',
+                        default: 'stop OLED scroll',
+                        description: 'stop the OLED scroll'
+                    }),
+                    blockType: BlockType.COMMAND
+                },
+                
+                {
+                    opcode: 'reset_OLED',
+                    text: formatMessage({
+                        id: 'pistemhat.reset_OLED',
+                        default: 'clear OLED',
+                        description: 'set OLED'
+                    }),
+                    blockType: BlockType.COMMAND,
                 },
                 {
                     opcode: 'get_button',
@@ -405,13 +808,9 @@ class Scratch3PiSTEMHATBlocks {
                 ROWs:
                 {
                     acceptReporters: true,
-                    items: ['1', '2', '3', '4']
+                    items: ['1', '2', '3', '4','5','6','7']
                 },
-                ROWDELs:
-                {
-                    acceptReporters: true,
-                    items: ['1', '2', '3', '4','All']
-                },
+            
                 BUTTONs: {
                     acceptReporters: true,
                     items: ['5', '6']
@@ -420,20 +819,53 @@ class Scratch3PiSTEMHATBlocks {
                     acceptReporters: false,
                     items: ['AN0', 'AN1', 'Light Sensor', 'Vin Voltage']
                 },
-                NOTEs: {
-                    acceptReporters: true,
-                    items: [
-                        'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4',
-                        'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5', 'OFF'
-                    ]
+                WRAPs: {
+                    acceptReporters: false,
+                    items: ['Warp', 'No Wrap']
+                },
+                SOLIDs: {
+                    acceptReporters: false,
+                    items: ['Solid', 'Outline']
+                },
+                DIRs: {
+                    acceptReporters: false,
+                    items: ['right', 'left']
+                },
+                SCALEs: {
+                    acceptReporters: false,
+                    items: ['Fit','Fill', 'No Scaling']
+                },
+                SPRITEs: {
+                    acceptReporters: false,
+                    items: 'getSpriteMenu'
                 }
             }
         };
+    }
+    getSpriteMenu() {
+        // Ensure the runtime is available
+        if (!this.runtime || !this.runtime.targets) {
+            console.warn('Runtime or targets not available.');
+            return ["Sprite1"];
+        }
+    
+        // Map through the targets to extract their names
+        const sprites = this.runtime.targets
+            .filter(target => target.getName() !== "Stage") // Exclude the "Stage"
+            .map(target => target.getName());
+
+        if (sprites.length === 0) {
+            return "No sprite found";
+        } else {
+            return sprites;
+        }
     }
 
 
     when_buttonPressed(args) 
     {
+        
+        
         const pin = Cast.toNumber(args.BUTTON);
         const state = gpio.get(pin, -1, -1); // Get state of pin, leave pin as input/output, leave pull state
         let binary = 0;
@@ -466,7 +898,6 @@ class Scratch3PiSTEMHATBlocks {
         stemhat.BuzzerSet(frequency, 128);
     }
     stop_BUZZER(args) {
-        
         stemhat.BuzzerSet(0, 0);
     }
 
@@ -620,28 +1051,115 @@ class Scratch3PiSTEMHATBlocks {
 
     }
     
-    set_OLED(args)
+    set_OLED_Text(args)
     {
-        stemhat.OLEDText(Cast.toString(args.TEXT),Cast.toNumber(args.ROW))
+        const text = Cast.toString(args.TEXT);
+        const x = Cast.toNumber(args.X1);
+        const y = Cast.toNumber(args.Y1);
+        const size = Cast.toNumber(args.SIZE);
+        const wrap = Cast.toString(args.WRAP);
+        var wrap1 = 0;
+        if (wrap == "Wrap") {
+            wrap1 = true;
+        }
+        else {
+            wrap1 = false;
+        }
+        oledDisplay.setCursor(x, y);
+        oledDisplay.writeString(font, size, text, 1, wrap1);
     }
     
+    set_OLED_Pixel(args)
+    {
+        const x = Cast.toNumber(args.X1);
+        const y = Cast.toNumber(args.Y1);
+        const state = Cast.toString(args.STATE);
+        var state1 = 0;
+        if (state == "ON") {
+            state1 = 1;
+        }
+        else {
+            state1 = 0;
+        }
+        oledDisplay.drawPixel([[x, y, state1]]);
+        
+
+    }
+
+    set_OLED_Circle(args)
+    {
+        const centerX = Cast.toNumber(args.X1);
+        const centerY = Cast.toNumber(args.Y1);
+        const radius = Cast.toNumber(args.RADIUS);
+        const solid = Cast.toString(args.SOLID);
+        var solid1 = 0;
+        if(solid == "Solid"){
+            solid1 = 1
+        }
+        oledDisplay.drawCircle(centerX, centerY, radius,1,solid1);
+    }
+    set_OLED_Line(args)
+    {
+        const x1 = Cast.toNumber(args.X1);
+        const y1 = Cast.toNumber(args.Y1);
+        const x2 = Cast.toNumber(args.X2);
+        const y2 = Cast.toNumber(args.Y2);
+        oledDisplay.drawLine(x1, y1, x2, y2, 1);
+    }
+
+    set_OLED_Rectangle(args)
+    {
+        const x = Cast.toNumber(args.X1);
+        const y = Cast.toNumber(args.Y1);
+        const width = Cast.toNumber(args.WIDTH);
+        const height = Cast.toNumber(args.HEIGHT);
+        const solid = Cast.toString(args.SOLID);
+        var solid1 = 0;
+        if (solid == "Solid") {
+            solid1 = 1;
+        }
+        oledDisplay.drawRect(x, y, width, height, 1, solid1);
+    }
+
+    set_OLED_Sprite(args)
+    {
+
+        const x = Cast.toNumber(args.X);
+        const y = Cast.toNumber(args.Y);
+        const Scale = Cast.toString(args.SCALE);
+        const spriteName = Cast.toString(args.SPRITE);
+        
+        if(Scale == "Fit")
+        {
+            DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
+        }
+        else if(Scale == "Fill")
+        {
+            DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
+        }
+        else
+        {
+            DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
+        }
+    }
+
+    stop_OLED_Scroll(args)
+    {   
+        oledDisplay.stopScroll();
+    }
+
+    set_OLED_Scroll(args)
+    {
+        const dir= Cast.toString(args.DIR);
+        const top = Cast.toNumber(args.TOP);
+        const end = Cast.toNumber(args.END);
+        oledDisplay.startScroll(dir, top, end);
+    }
+    
+
     reset_OLED(args)
     {
-        if (Cast.toString(args.ROWDEL) == "1") {
-            stemhat.OLEDClear(1)
-        }
-        if (Cast.toString(args.ROWDEL) == "2") {
-            stemhat.OLEDClear(2)
-        }
-        if (Cast.toString(args.ROWDEL) == "3") {
-            stemhat.OLEDClear(3)
-        }
-        if (Cast.toString(args.ROWDEL) == "4") {
-            stemhat.OLEDClear(4)
-        }
-        if (Cast.toString(args.ROWDEL) == "All") {
-            stemhat.OLEDClear(5)
-        }
+        oledDisplay.clearDisplay();
     }
 
     get_button(args) 
@@ -725,11 +1243,12 @@ class Scratch3PiSTEMHATBlocks {
     }
 
 
-    async get_ultrasonic(args) {
+    get_ultrasonic(args) {
         const currentTime = Date.now();
         if (currentTime - lastReadTime1 > 100) 
         {
-            updateUltrasonicCache();
+            const cachedUltrasonicValue = stemhat.UltrasonicRead();
+            lastReadTime1 = Date.now();
         }
         return cachedUltrasonicValue;
     }
