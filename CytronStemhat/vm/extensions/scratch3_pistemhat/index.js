@@ -518,7 +518,8 @@ class Scratch3PiSTEMHATBlocks {
                         },
                         SIZE: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: '1'
+                            defaultValue: '1',
+                            menu: 'SIZEs',
                         },
                         WRAP: {
                             type: ArgumentType.String,
@@ -827,6 +828,10 @@ class Scratch3PiSTEMHATBlocks {
                 SPRITEs: {
                     acceptReporters: false,
                     items: 'getSpriteMenu'
+                },
+                SIZEs:{
+                    acceptReporters: false,
+                    items: ['1','2','3','4']
                 }
             }
         };
@@ -1047,7 +1052,7 @@ class Scratch3PiSTEMHATBlocks {
         const y = Cast.toNumber(args.Y1);
         const size = Cast.toNumber(args.SIZE);
         const wrap = Cast.toString(args.WRAP);
-        var wrap1 = 0;
+        var wrap1 = true;
         if (wrap == "Wrap") {
             wrap1 = true;
         }
