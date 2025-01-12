@@ -11,11 +11,12 @@ const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
 const i2c = require('i2c-bus');
+const { log } = require('console');
 const oled = window.require(path.join(__static, 'oled.js'));
 const font = window.require(path.join(__static, 'oled-font.js'));
 
 var sudo = window.require('sudo-prompt');
-const { exec } = require('child_process');
+const { exec } = window.require('child_process');
 
 
 //To Request Permission for GPIOD 
@@ -114,196 +115,14 @@ oledDisplay.turnOnDisplay();
 //////////////////////////////////////////////////////////////////
 
 
-//////////////////////////////////////////////////////////////////
-//DISPLAY SPRITE FOR OLED
-//////////////////////////////////////////////////////////////////
-function scaleImageToFitAspectRatio(image, targetWidth, targetHeight) {
-    const originalWidth = image.width;
-    const originalHeight = image.height;
 
-    // Calculate the scaling factor for width and height
-    const scaleX = targetWidth / originalWidth;
-    const scaleY = targetHeight / originalHeight;
-
-    // Choose the smaller scale factor to maintain aspect ratio
-    const scale = Math.min(scaleX, scaleY);
-
-    // Calculate the new width and height based on the scale factor
-    const newWidth = Math.floor(originalWidth * scale);
-    const newHeight = Math.floor(originalHeight * scale);
-
-    // Create a new array for the scaled image data
-    let scaledBitmap = [];
-
-    // Loop through each pixel of the target (scaled) image
-    for (let y = 0; y < newHeight; y++) {
-        for (let x = 0; x < newWidth; x++) {
-            // Find the corresponding position in the original image
-            const origX = Math.floor(x / scale);
-            const origY = Math.floor(y / scale);
-
-            // Calculate the index in the original image data
-            const index = (origY * originalWidth + origX) * 4;
-
-            // Get the RGBA values from the original image
-            const r = image.data[index];
-            const g = image.data[index + 1];
-            const b = image.data[index + 2];
-            const a = image.data[index + 3];
-
-            // Add the RGBA values to the scaled bitmap
-            scaledBitmap.push(r, g, b, a);
-        }
-    }
-
-    return {
-        width: newWidth,
-        height: newHeight,
-        data: scaledBitmap
-    };
-}
-
-function scaleImageToFit(image, targetWidth, targetHeight) {
-    const originalWidth = image.width;
-    const originalHeight = image.height;
-    const scaleX = targetWidth / originalWidth;
-    const scaleY = targetHeight / originalHeight;
-
-    // Create a new array for the scaled image data
-    let scaledBitmap = [];
-
-    // Loop through each pixel of the target (scaled) image
-    for (let y = 0; y < targetHeight; y++) {
-        for (let x = 0; x < targetWidth; x++) {
-            // Find the corresponding position in the original image
-            const origX = Math.floor(x / scaleX);
-            const origY = Math.floor(y / scaleY);
-
-            // Calculate the index in the original image data
-            const index = (origY * originalWidth + origX) * 4;
-            
-            // Get the RGBA values from the original image
-            const r = image.data[index];
-            const g = image.data[index + 1];
-            const b = image.data[index + 2];
-            const a = image.data[index + 3];
-
-            // Add the RGBA values to the scaled bitmap
-            scaledBitmap.push(r, g, b, a);
-        }
-    }
-
-    return {
-        width: targetWidth,
-        height: targetHeight,
-        data: scaledBitmap
-    };
-}
-
-function DrawSpriteBitmap(runtime,spriteName,x,y,scale) {
-    // Ensure the runtime and renderer are available
-    if (!runtime || !runtime.renderer) {
-        return;
-    }
-
-    // Get the currently editing target (the selected sprite)
-    const currentTarget = runtime.targets.find(target => target.getName() === spriteName);
-    if (!currentTarget) {
-        return;
-    }
-    
-
-    // Get the drawable ID of the current target
-    const drawableID = currentTarget.drawableID;
-    if (drawableID === undefined) {
-        return;
-    }
-
-    // Access the drawable object
-    const drawable = runtime.renderer._allDrawables[drawableID];
-    if (!drawable) {
-        return;
-    }
-
-    // Access the skin associated with the drawable
-    const skin = drawable.skin;
-    if (!skin) {
-        return;
-    }
-    else
-    {
-        
-        const silhouette = skin._silhouette;
-        const height = silhouette._height;
-        const width = silhouette._width;
-        const colorData = silhouette._colorData;
-    
-        if (!colorData) {
-            return;
-        }
-    
-        // Create an array to hold the final bitmap data (each pixel is 4 values: R, G, B, A)
-        let bitmap = [];
-    
-        // Iterate over the colorData and assign RGBA values to bitmap
-        for (let i = 0; i < colorData.length; i += 4) {
-            // Assuming color data comes in a sequential order of R, G, B, A
-            const r = colorData[i];
-            const g = colorData[i + 1];
-            const b = colorData[i + 2];
-            const a = colorData[i + 3];
-    
-            // Add the pixel data (RGBA) to the bitmap array
-            bitmap.push(r, g, b, a);
-        }
-    
-        
-        if(scale == 1){
-            const image = {
-                width: width,
-                height: height,
-                data: bitmap
-              };
-
-            var scaledImage = scaleImageToFit(image, 128, 64);
-              
-            oledDisplay.drawRGBAImage(scaledImage,x,y);
-
-        } 
-        else if(scale == 2){
-            const image = {
-                width: width,
-                height: height,
-                data: bitmap
-              };
-
-            var scaledImage = scaleImageToFitAspectRatio(image, 128, 64);
-              
-            oledDisplay.drawRGBAImage(scaledImage,x,y);
-
-        } 
-        else{
-            const image = {
-                width: width,
-                height: height,
-                data: bitmap
-              };
-              
-            oledDisplay.drawRGBAImage(image,x,y);
-
-        }
-
-        
-       
-    }
-}
-//////////////////////////////////////////////////////////////////
 
 var cachedUltrasonicValue = -1;
 var lastReadTime1 = 0;
 
 var cachedHumidityValue = -1;
 var lastReadTime2 = 0;
+
 
 var cachedTemperatureValue = -1;
 var lastReadTime3 = 0;
@@ -1125,15 +944,15 @@ class Scratch3PiSTEMHATBlocks {
         
         if(Scale == "Fit")
         {
-            DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
+            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
         }
         else if(Scale == "Fill")
         {
-            DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
+            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
         }
         else
         {
-            DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
+            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
         }
     }
 
@@ -1212,11 +1031,7 @@ class Scratch3PiSTEMHATBlocks {
     {
         const currentTime = Date.now();
         if (currentTime - lastReadTime3 > 100) {
-            var temp = stemhat.AHT20Read(0).toFixed(1);
-            if(temp != -1)
-            {
-                cachedTemperatureValue = temp
-            }
+            cachedTemperatureValue = stemhat.AHT20Read(0).toFixed(1);
             lastReadTime3 = currentTime;
         }
         return cachedTemperatureValue;  
@@ -1226,11 +1041,7 @@ class Scratch3PiSTEMHATBlocks {
     {
         const currentTime = Date.now();
         if (currentTime - lastReadTime2 > 100) {
-            var temp = stemhat.AHT20Read(1).toFixed(1);
-            if(temp != -1)
-            {
-                cachedHumidityValue = temp
-            }
+            cachedHumidityValue = stemhat.AHT20Read(1).toFixed(1);
             lastReadTime2 = currentTime;
         }
         return cachedHumidityValue;  
@@ -1239,9 +1050,8 @@ class Scratch3PiSTEMHATBlocks {
 
     get_ultrasonic(args) {
         const currentTime = Date.now();
-        if (currentTime - lastReadTime1 > 100) 
-        {
-            const cachedUltrasonicValue = stemhat.UltrasonicRead();
+        if (currentTime - lastReadTime1 > 100){
+            cachedUltrasonicValue = stemhat.UltrasonicRead();
             lastReadTime1 = Date.now();
         }
         return cachedUltrasonicValue;
