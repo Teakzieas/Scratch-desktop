@@ -656,21 +656,28 @@ class Scratch3PiSTEMHATBlocks {
     }
     getSpriteMenu() {
         // Ensure the runtime is available
-        if (!this.runtime || !this.runtime.targets) {
-            console.warn('Runtime or targets not available.');
-            return ["Sprite1"];
-        }
+        try{
+            if (!this.runtime || !this.runtime.targets) {
+                console.warn('Runtime or targets not available.');
+                return ["No Sprite Found"];
+            }
+        
+            // Map through the targets to extract their names
+            const sprites = this.runtime.targets
+                .filter(target => target.getName() !== "Stage") // Exclude the "Stage"
+                .map(target => target.getName());
     
-        // Map through the targets to extract their names
-        const sprites = this.runtime.targets
-            .filter(target => target.getName() !== "Stage") // Exclude the "Stage"
-            .map(target => target.getName());
+            if (sprites.length === 0) {
+                return ["No Sprite Found"];
+            } else {
+                return sprites;
+            }
 
-        if (sprites.length === 0) {
-            return "No sprite found";
-        } else {
-            return sprites;
+        }catch(e){
+            console.error(e);
+            return ["No Sprite Found"];
         }
+       
     }
 
 
@@ -935,24 +942,29 @@ class Scratch3PiSTEMHATBlocks {
 
     set_OLED_Sprite(args)
     {
-
-        const x = Cast.toNumber(args.X);
-        const y = Cast.toNumber(args.Y);
-        const Scale = Cast.toString(args.SCALE);
-        const spriteName = Cast.toString(args.SPRITE);
-        
-        if(Scale == "Fit")
+        try
         {
-            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
-        }
-        else if(Scale == "Fill")
+            const x = Cast.toNumber(args.X);
+            const y = Cast.toNumber(args.Y);
+            const Scale = Cast.toString(args.SCALE);
+            const spriteName = Cast.toString(args.SPRITE);
+            
+            if(Scale == "Fit")
+            {
+                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
+            }
+            else if(Scale == "Fill")
+            {
+                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
+            }
+            else
+            {
+                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
+            }
+        }catch(error)
         {
-            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
-        }
-        else
-        {
-            oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
-        }
+            console.log("Error: " + error);
+        }      
     }
 
     stop_OLED_Scroll(args)
