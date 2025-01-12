@@ -11,12 +11,11 @@ const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
 const i2c = require('i2c-bus');
-const { log } = require('console');
 const oled = window.require(path.join(__static, 'oled.js'));
 const font = window.require(path.join(__static, 'oled-font.js'));
 
 var sudo = window.require('sudo-prompt');
-const { exec } = window.require('child_process');
+const { exec } = require('child_process');
 
 
 //To Request Permission for GPIOD 
