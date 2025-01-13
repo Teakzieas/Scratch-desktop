@@ -113,22 +113,66 @@ void set_pwm_buzzer(int frequency, int pwm_duty_cycle) {
 
 
 // NodeJs for read_ultrasonic function
-napi_value UltrasonicRead(napi_env env, napi_callback_info info) {
+napi_value UltrasonicReadAsync(napi_env env, napi_callback_info info) {
+    napi_value promise;
+    napi_deferred deferred;
     napi_status status;
 
-    // Hardcoded pin values
-    const int trig_pin = 20;
-    const int echo_pin = 26;
+    // Create a promise and deferred
+    status = napi_create_promise(env, &deferred, &promise);
+    if (status != napi_ok) return nullptr;
 
-    // Read ultrasonic sensor
-    int distance = read_ultrasonic(trig_pin, echo_pin);
+    // Allocate async work
+    napi_async_work work;
+    napi_value resource_name;
+    napi_create_string_utf8(env, "UltrasonicReadAsync", NAPI_AUTO_LENGTH, &resource_name);
 
-    // Create a return value for the distance
-    napi_value n_distance;
-    status = napi_create_int32(env, distance, &n_distance);
-    assert(status == napi_ok);
+    // Define the data structure for passing data
+    typedef struct {
+        int distance;
+        napi_deferred deferred;
+    } WorkData;
 
-    return n_distance;
+    auto* work_data = (WorkData*)malloc(sizeof(WorkData));
+    work_data->deferred = deferred;
+
+    // Async execute function
+    auto async_execute = [](napi_env env, void* data) {
+        WorkData* work_data = (WorkData*)data;
+
+        // Hardcoded pin values
+        const int trig_pin = 20;
+        const int echo_pin = 26;
+
+        // Read ultrasonic sensor
+        work_data->distance = read_ultrasonic(trig_pin, echo_pin);
+    };
+
+    // Async complete function
+    auto async_complete = [](napi_env env, napi_status status, void* data) {
+        WorkData* work_data = (WorkData*)data;
+        napi_value js_result;
+
+        if (status == napi_ok) {
+            // Create a JavaScript integer for the distance
+            napi_create_int32(env, work_data->distance, &js_result);
+            napi_resolve_deferred(env, work_data->deferred, js_result);
+        } else {
+            napi_value error_msg;
+            napi_create_string_utf8(env, "Async operation failed", NAPI_AUTO_LENGTH, &error_msg);
+            napi_value error;
+            napi_create_error(env, nullptr, error_msg, &error);
+            napi_reject_deferred(env, work_data->deferred, error);
+        }
+
+        free(work_data);
+    };
+
+    // Create and queue async work
+    napi_create_async_work(env, nullptr, resource_name, async_execute, async_complete, work_data, &work);
+    napi_queue_async_work(env, work);
+
+    return promise;
 }
 
 napi_value BuzzerSet(napi_env env, napi_callback_info info) {
@@ -275,40 +319,75 @@ napi_value I2cReadFromRegister(napi_env env, napi_callback_info info) {
 
 
 
-napi_value AHT20Read(napi_env env, napi_callback_info info) {
-    size_t argc = 1;  // Expecting one argument: type
-    napi_value args[1];
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+napi_value AHT20ReadAsync(napi_env env, napi_callback_info info) {
+    napi_value promise;
+    napi_deferred deferred;
+    napi_status status;
 
-    if (argc != 1) {
-        napi_throw_error(env, nullptr, "Expecting 1 input: type (integer) where 0 = temperature, 1 = humidity");
-        return nullptr;
-    }
+    status = napi_create_promise(env, &deferred, &promise);
+    if (status != napi_ok) return nullptr;
 
-    int32_t type;
-    napi_get_value_int32(env, args[0], &type);
+    // Allocate async work
+    napi_async_work work;
+    napi_value resource_name;
+    napi_create_string_utf8(env, "AHT20ReadAsync", NAPI_AUTO_LENGTH, &resource_name);
 
-    if (type != 0 && type != 1) {
-        napi_throw_error(env, nullptr, "Invalid input: type must be 0 (temperature) or 1 (humidity)");
-        return nullptr;
-    }
+    // Define the data structure for passing data
+    typedef struct {
+        float temperature;
+        float humidity;
+        napi_deferred deferred;
+    } WorkData;
 
-    float result = AHT20Read(type);
+    auto* work_data = (WorkData*)malloc(sizeof(WorkData));
+    work_data->deferred = deferred;
 
-    if (result == -1) {
-        napi_throw_error(env, nullptr, "Failed to read data from AHT20 sensor");
-        return nullptr;
-    }
+    auto async_execute = [](napi_env env, void* data) {
+        WorkData* work_data = (WorkData*)data;
 
-    napi_value napi_result;
-    napi_create_double(env, result, &napi_result);
-    return napi_result;
+        // Read temperature and humidity using AHT20Read
+        AHT20Result result = AHT20Read();
+        work_data->temperature = result.temperature;
+        work_data->humidity = result.humidity; 
+    };
+
+    auto async_complete = [](napi_env env, napi_status status, void* data) {
+        WorkData* work_data = (WorkData*)data;
+        napi_value js_result;
+
+        if (status == napi_ok) {
+            // Create a JavaScript object to hold the results
+            napi_value result_obj;
+            napi_create_object(env, &result_obj);
+
+            napi_value temp_value, humidity_value;
+            napi_create_double(env, work_data->temperature, &temp_value);
+            napi_create_double(env, work_data->humidity, &humidity_value);
+
+            napi_set_named_property(env, result_obj, "temperature", temp_value);
+            napi_set_named_property(env, result_obj, "humidity", humidity_value);
+
+            napi_resolve_deferred(env, work_data->deferred, result_obj);
+        } else {
+            napi_value error_msg;
+            napi_create_string_utf8(env, "Async operation failed", NAPI_AUTO_LENGTH, &error_msg);
+            napi_value error;
+            napi_create_error(env, nullptr, error_msg, &error);
+            napi_reject_deferred(env, work_data->deferred, error);
+        }
+
+        free(work_data);
+    };
+
+    napi_create_async_work(env, nullptr, resource_name, async_execute, async_complete, work_data, &work);
+    napi_queue_async_work(env, work);
+
+    return promise;
 }
 
 
-
 napi_value Init(napi_env env, napi_value exports) {
-    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadFn,UltrasonicReadFn,BuzzerSetFn;
+    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadAsyncFn,UltrasonicReadAsynFn,BuzzerSetFn;
 
     napi_create_function(env, nullptr, 0, I2cCreateDevice, nullptr, &I2ccreateDeviceFn);
     napi_set_named_property(env, exports, "I2ccreateDevice", I2ccreateDeviceFn);
@@ -319,11 +398,11 @@ napi_value Init(napi_env env, napi_value exports) {
     napi_create_function(env, nullptr, 0, I2cReadFromRegister, nullptr, &I2creadFromRegisterFn);
     napi_set_named_property(env, exports, "I2creadFromRegister", I2creadFromRegisterFn);
     
-    napi_create_function(env, nullptr, 0, AHT20Read, nullptr, &AHT20ReadFn);
-    napi_set_named_property(env, exports, "AHT20Read", AHT20ReadFn);
+    napi_create_function(env, nullptr, 0, AHT20ReadAsync, nullptr, &AHT20ReadAsyncFn);
+    napi_set_named_property(env, exports, "AHT20ReadAsync", AHT20ReadAsyncFn);
     
-    napi_create_function(env, nullptr, 0, UltrasonicRead, nullptr, &UltrasonicReadFn);
-    napi_set_named_property(env, exports, "UltrasonicRead", UltrasonicReadFn);
+    napi_create_function(env, nullptr, 0, UltrasonicReadAsync, nullptr, &UltrasonicReadAsynFn);
+    napi_set_named_property(env, exports, "UltrasonicReadAsync", UltrasonicReadAsynFn);
 
 	napi_create_function(env, nullptr, 0, BuzzerSet, nullptr, &BuzzerSetFn);
     napi_set_named_property(env, exports, "BuzzerSet", BuzzerSetFn);

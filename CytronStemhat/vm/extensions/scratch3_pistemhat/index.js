@@ -97,6 +97,8 @@ function writeLog(message) {
 }
 //////////////////////////////////////////////////////////////////
 
+var cachedBuzzerValue = 0
+
 
 //////////////////////////////////////////////////////////////////
 //OLED MODULE INIT
@@ -113,18 +115,60 @@ oledDisplay.clearDisplay();
 oledDisplay.turnOnDisplay();
 //////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////
+//AHT20 MODULE
+//////////////////////////////////////////////////////////////////
+var cachedHumidityValue = -1;
+var lastReadTime2 = 0;
+var cachedTemperatureValue = -1;
+var lastReadTime3 = 0;
 
+AHT20isReading = false;
 
+async function GetAHT20() {
+    if (AHT20isReading) {
+        return; // Exit if a read is already in progress
+    }
 
+    AHT20isReading = true; // Mark as running
+    try {
+        const result = await stemhat.AHT20ReadAsync();
+        cachedTemperatureValue = result.temperature;
+        cachedHumidityValue = result.humidity;
+
+    } catch (err) {
+        console.error("Error in GetAHT20:", err);
+    } finally {
+        AHT20isReading = false; // Reset the flag once done
+    }
+}
+//////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////
+//UltraSonic MODULE
+//////////////////////////////////////////////////////////////////
 var cachedUltrasonicValue = -1;
 var lastReadTime1 = 0;
 
-var cachedHumidityValue = -1;
-var lastReadTime2 = 0;
+var UltrasonicisReading = false;
 
+async function GetUltrasonic() {
+    if (UltrasonicisReading) {
+        return; // Exit if a read is already in progress
+    }
+    UltrasonicisReading = true; // Mark as running
+    try {
+        const result = await stemhat.UltrasonicReadAsync();
+        cachedUltrasonicValue = result;
+    } catch (err) {
+        console.error("Error in GetUltrasonic:", err);
+    } finally {
+        UltrasonicisReading = false; // Reset the flag once done
+    }
+}
 
-var cachedTemperatureValue = -1;
-var lastReadTime3 = 0;
+//////////////////////////////////////////////////////////////////
+
 
 //Motor Controller
 function scaleTo255(value) {
@@ -714,10 +758,17 @@ class Scratch3PiSTEMHATBlocks {
 
     set_BUZZER(args) {
         const frequency = Cast.toNumber(args.FREQ);
-        stemhat.BuzzerSet(frequency, 128);
+        if(cachedBuzzerValue !== frequency)
+        {
+            stemhat.BuzzerSet(frequency, 128);
+            cachedBuzzerValue = frequency;
+        }
+        
+
     }
     stop_BUZZER(args) {
         stemhat.BuzzerSet(0, 0);
+        cachedBuzzerValue = -1;
     }
 
     stop_MOTOR(args) 
@@ -1041,8 +1092,8 @@ class Scratch3PiSTEMHATBlocks {
     get_temp(args)
     {
         const currentTime = Date.now();
-        if (currentTime - lastReadTime3 > 100) {
-            cachedTemperatureValue = stemhat.AHT20Read(0).toFixed(1);
+        if (currentTime - lastReadTime3 > 500) {
+            GetAHT20();
             lastReadTime3 = currentTime;
         }
         return cachedTemperatureValue;  
@@ -1051,8 +1102,8 @@ class Scratch3PiSTEMHATBlocks {
     get_humidity(args)
     {
         const currentTime = Date.now();
-        if (currentTime - lastReadTime2 > 100) {
-            cachedHumidityValue = stemhat.AHT20Read(1).toFixed(1);
+        if (currentTime - lastReadTime2 > 500) {
+            GetAHT20();
             lastReadTime2 = currentTime;
         }
         return cachedHumidityValue;  
@@ -1062,7 +1113,7 @@ class Scratch3PiSTEMHATBlocks {
     get_ultrasonic(args) {
         const currentTime = Date.now();
         if (currentTime - lastReadTime1 > 100){
-            cachedUltrasonicValue = stemhat.UltrasonicRead();
+            GetUltrasonic();
             lastReadTime1 = Date.now();
         }
         return cachedUltrasonicValue;
