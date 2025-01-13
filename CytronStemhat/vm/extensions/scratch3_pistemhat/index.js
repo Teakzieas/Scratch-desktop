@@ -133,8 +133,8 @@ async function GetAHT20() {
     AHT20isReading = true; // Mark as running
     try {
         const result = await stemhat.AHT20ReadAsync();
-        cachedTemperatureValue = result.temperature;
-        cachedHumidityValue = result.humidity;
+        cachedTemperatureValue = result.temperature.toFixed(1);
+        cachedHumidityValue = result.humidity.toFixed(1);
 
     } catch (err) {
         console.error("Error in GetAHT20:", err);
