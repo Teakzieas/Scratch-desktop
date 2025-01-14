@@ -15,7 +15,7 @@
     "compile:cpp32": "CXX=arm-linux-gnueabihf-g++ CC=arm-linux-gnueabihf-gcc node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./cpp && cp ./cpp/build/Release/gpiolib.node ./static/",
     "compile:cpp64": "CXX=g++ CC=gcc node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./cpp && cp ./cpp/build/Release/gpiolib.node ./static/",
     "compile:stemhatCpp": "CXX=g++ CC=gcc node ./node_modules/node-gyp/bin/node-gyp.js configure build -C ./CytronStemhatCpp && cp ./CytronStemhatCpp/build/Release/stemhat.node ./static/",
-    "compile:stemhatI2c": "cd CytronStemhatI2c && npm run install && cd .. && npx electron-rebuild -f -w --module-dir ./CytronStemhatI2c && cp ./CytronStemhatI2c/build/Release/i2c.node ./static/",
+    "compile:stemhatI2c": "cd CytronStemhatI2c && npm install && cd .. && npx electron-rebuild -f -w --module-dir ./CytronStemhatI2c && cp ./CytronStemhatI2c/build/Release/i2c.node ./static/",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
     "build": "npm run build:dev",
     "build:dev": "npm run compile && npm run doBuild -- --mode=dev",

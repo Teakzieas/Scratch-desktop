@@ -29,6 +29,8 @@ npm-*
 /cpp/build/*
 /CytronStemhatCpp/build/*
 /CytronStemhatI2c/build/*
+/CytronStemhatI2c/node_modules/*
+/CytronStemhatI2c/bin/*
 
 #don't store the dist
 /scratch-dist
