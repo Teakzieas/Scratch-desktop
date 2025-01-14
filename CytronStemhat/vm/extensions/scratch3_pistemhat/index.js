@@ -10,7 +10,7 @@ const gpio = window.require(path.join(__static, 'gpiolib.node'))
 const stemhat = window.require(path.join(__static, 'stemhat.node'));
 const device = stemhat.I2ccreateDevice("/dev/i2c-1", 0x08);
 
-const i2c = require('i2c-bus');
+const i2c = window.require(path.join(__static, 'i2c-bus.js'));
 const oled = window.require(path.join(__static, 'oled.js'));
 const font = window.require(path.join(__static, 'oled-font.js'));
 
@@ -567,6 +567,33 @@ class Scratch3PiSTEMHATBlocks {
                     }),
                     blockType: BlockType.COMMAND
                 },
+                {
+                    opcode: 'reset_OLED_section',
+                    text: formatMessage({
+                        id: 'pistemhat.reset_section_OLED',
+                        default: 'clear spesific section in OLED x[X] y[Y] Height[HEIGHT] Width[WIDTH]',
+                        description: 'clear spesific section in OLED'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        X: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        Y: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0'
+                        },
+                        HEIGHT: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        },
+                        WIDTH: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '10'
+                        }
+                    }
+                },
                 
                 {
                     opcode: 'reset_OLED',
@@ -921,7 +948,7 @@ class Scratch3PiSTEMHATBlocks {
 
     }
     
-    set_OLED_Text(args)
+    async set_OLED_Text(args)
     {
         const text = Cast.toString(args.TEXT);
         const x = Cast.toNumber(args.X1);
@@ -935,11 +962,11 @@ class Scratch3PiSTEMHATBlocks {
         else {
             wrap1 = false;
         }
-        oledDisplay.setCursor(x, y);
-        oledDisplay.writeString(font, size, text, 1, wrap1);
+        await oledDisplay.setCursor(x, y);
+        await oledDisplay.writeString(font, size, text, 1, wrap1);
     }
     
-    set_OLED_Pixel(args)
+    async set_OLED_Pixel(args)
     {
         const x = Cast.toNumber(args.X1);
         const y = Cast.toNumber(args.Y1);
@@ -951,12 +978,12 @@ class Scratch3PiSTEMHATBlocks {
         else {
             state1 = 0;
         }
-        oledDisplay.drawPixel([[x, y, state1]]);
+        await oledDisplay.drawPixel([[x, y, state1]]);
         
 
     }
 
-    set_OLED_Circle(args)
+    async set_OLED_Circle(args)
     {
         const centerX = Cast.toNumber(args.X1);
         const centerY = Cast.toNumber(args.Y1);
@@ -966,18 +993,19 @@ class Scratch3PiSTEMHATBlocks {
         if(solid == "Solid"){
             solid1 = 1
         }
-        oledDisplay.drawCircle(centerX, centerY, radius,1,solid1);
+        await oledDisplay.drawCircle(centerX, centerY, radius,1,solid1);
     }
-    set_OLED_Line(args)
+
+    async set_OLED_Line(args)
     {
         const x1 = Cast.toNumber(args.X1);
         const y1 = Cast.toNumber(args.Y1);
         const x2 = Cast.toNumber(args.X2);
         const y2 = Cast.toNumber(args.Y2);
-        oledDisplay.drawLine(x1, y1, x2, y2, 1);
+        await oledDisplay.drawLine(x1, y1, x2, y2, 1);
     }
 
-    set_OLED_Rectangle(args)
+    async set_OLED_Rectangle(args)
     {
         const x = Cast.toNumber(args.X1);
         const y = Cast.toNumber(args.Y1);
@@ -988,10 +1016,10 @@ class Scratch3PiSTEMHATBlocks {
         if (solid == "Solid") {
             solid1 = 1;
         }
-        oledDisplay.drawRect(x, y, width, height, 1, solid1);
+        await oledDisplay.drawRect(x, y, width, height, 1, solid1);
     }
 
-    set_OLED_Sprite(args)
+    async set_OLED_Sprite(args)
     {
         try
         {
@@ -1002,15 +1030,15 @@ class Scratch3PiSTEMHATBlocks {
             
             if(Scale == "Fit")
             {
-                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
+                await oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,2);
             }
             else if(Scale == "Fill")
             {
-                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
+                await oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,1);
             }
             else
             {
-                oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
+                await oledDisplay.DrawSpriteBitmap(this.runtime,spriteName,x,y,0);
             }
         }catch(error)
         {
@@ -1018,23 +1046,33 @@ class Scratch3PiSTEMHATBlocks {
         }      
     }
 
-    stop_OLED_Scroll(args)
+    async stop_OLED_Scroll(args)
     {   
-        oledDisplay.stopScroll();
+        await oledDisplay.stopScroll();
     }
 
-    set_OLED_Scroll(args)
+    async set_OLED_Scroll(args)
     {
         const dir= Cast.toString(args.DIR);
         const top = Cast.toNumber(args.TOP);
         const end = Cast.toNumber(args.END);
-        oledDisplay.startScroll(dir, top, end);
+        await oledDisplay.startScroll(dir, top, end);
+    }
+
+    async reset_OLED_section(args)
+    {
+        const x = Cast.toNumber(args.X);
+        const y = Cast.toNumber(args.Y);
+        const height = Cast.toNumber(args.HEIGHT);
+        const width = Cast.toNumber(args.WIDTH);
+        
+        await oledDisplay.drawRect(x, y, width, height, 0, 1);
     }
     
 
-    reset_OLED(args)
+    async reset_OLED(args)
     {
-        oledDisplay.clearDisplay();
+        await oledDisplay.clearDisplay();
     }
 
     get_button(args) 

@@ -4,3 +4,4 @@
 # Unignore specific files
 !oled.js
 !oled-font.js
+!i2c-bus.js
