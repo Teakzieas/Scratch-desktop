@@ -1,5 +1,4 @@
 #include <node_api.h>
-#include <pigpiod_if2.h>
 #include <stdexcept>
 #include <assert.h>
 #include <stdlib.h>
@@ -87,31 +86,6 @@ int read_ultrasonic(int trig_pin, int echo_pin) {
     return distance;
 }
 
-
-void set_pwm_buzzer(int frequency, int pwm_duty_cycle) {
-    int pi = pigpio_start(nullptr, nullptr);
-    if (pi < 0) {
-        std::cerr << "Failed to connect to pigpio daemon!" << std::endl;
-        return;
-    }
-
-    // Set GPIO pin 19 (BCM pin) as an output pin
-    int gpio_pin = 19; // Choose the GPIO pin
-    set_mode(pi, gpio_pin, PI_OUTPUT);
-
-    // Set PWM frequency (Hz) and range (0-255 for 8-bit resolution)
-    int pwm_range = 255; // PWM range (0-255 for 8-bit)
-
-    // Set PWM frequency and range
-    set_PWM_frequency(pi, gpio_pin, frequency);
-    set_PWM_range(pi, gpio_pin, pwm_range);
-
-    // Set the PWM duty cycle (0-255)
-    set_PWM_dutycycle(pi, gpio_pin, pwm_duty_cycle);
-    pigpio_stop(pi); // Disconnect from the pigpio daemon
-}
-
-
 // NodeJs for read_ultrasonic function
 napi_value UltrasonicReadAsync(napi_env env, napi_callback_info info) {
     napi_value promise;
@@ -175,45 +149,6 @@ napi_value UltrasonicReadAsync(napi_env env, napi_callback_info info) {
     return promise;
 }
 
-napi_value BuzzerSet(napi_env env, napi_callback_info info) {
-    napi_status status;
-
-    // Parse the arguments from JavaScript (frequency and pwm_duty_cycle)
-    size_t argc = 2; // Expecting two arguments: frequency and pwm_duty_cycle
-    napi_value argv[2];
-    status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
-    if (status != napi_ok || argc != 2) {
-        napi_throw_error(env, nullptr, "Expected two arguments (frequency, pwm_duty_cycle)");
-        return nullptr;
-    }
-
-    // Convert the arguments to integers
-    int32_t frequency;
-    int32_t pwm_duty_cycle;
-
-    // Parse the first argument (frequency)
-    status = napi_get_value_int32(env, argv[0], &frequency);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid argument: expected an integer for frequency");
-        return nullptr;
-    }
-
-    // Parse the second argument (pwm_duty_cycle)
-    status = napi_get_value_int32(env, argv[1], &pwm_duty_cycle);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid argument: expected an integer for pwm_duty_cycle");
-        return nullptr;
-    }
-
-    // Call the C++ function to set the buzzer frequency and duty cycle
-    set_pwm_buzzer(frequency, pwm_duty_cycle);
-
-    // Return undefined
-    napi_value result;
-    status = napi_get_undefined(env, &result);
-    assert(status == napi_ok);
-    return result;
-}
 
 // Helper function to throw JavaScript errors
 void ThrowJavaScriptError(napi_env env, const char* message) {
@@ -317,8 +252,6 @@ napi_value I2cReadFromRegister(napi_env env, napi_callback_info info) {
     return result;
 }
 
-
-
 napi_value AHT20ReadAsync(napi_env env, napi_callback_info info) {
     napi_value promise;
     napi_deferred deferred;
@@ -387,7 +320,7 @@ napi_value AHT20ReadAsync(napi_env env, napi_callback_info info) {
 
 
 napi_value Init(napi_env env, napi_value exports) {
-    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadAsyncFn,UltrasonicReadAsynFn,BuzzerSetFn;
+    napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadAsyncFn,UltrasonicReadAsynFn;
 
     napi_create_function(env, nullptr, 0, I2cCreateDevice, nullptr, &I2ccreateDeviceFn);
     napi_set_named_property(env, exports, "I2ccreateDevice", I2ccreateDeviceFn);
@@ -403,9 +336,6 @@ napi_value Init(napi_env env, napi_value exports) {
     
     napi_create_function(env, nullptr, 0, UltrasonicReadAsync, nullptr, &UltrasonicReadAsynFn);
     napi_set_named_property(env, exports, "UltrasonicReadAsync", UltrasonicReadAsynFn);
-
-	napi_create_function(env, nullptr, 0, BuzzerSet, nullptr, &BuzzerSetFn);
-    napi_set_named_property(env, exports, "BuzzerSet", BuzzerSetFn);
 
     return exports;
 }

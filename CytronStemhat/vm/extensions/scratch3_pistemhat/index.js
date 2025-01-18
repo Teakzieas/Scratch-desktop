@@ -787,14 +787,14 @@ class Scratch3PiSTEMHATBlocks {
         const frequency = Cast.toNumber(args.FREQ);
         if(cachedBuzzerValue !== frequency)
         {
-            stemhat.BuzzerSet(frequency, 128);
+            stemhat.I2cwriteToRegister(device, 0x13, Math.floor(frequency/10));
             cachedBuzzerValue = frequency;
         }
         
 
     }
     stop_BUZZER(args) {
-        stemhat.BuzzerSet(0, 0);
+        stemhat.I2cwriteToRegister(device, 0x13, 0);
         cachedBuzzerValue = -1;
     }
 
