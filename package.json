@@ -6,7 +6,7 @@
   "version": "3.30.9-Cytron-Pi4-32",
   "license": "BSD-3-Clause",
   "scripts": {
-    "Piconfig": "sudo raspi-config nonint do_i2c 0 && sudo dphys-swapfile swapoff && sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile  &&sudo dphys-swapfile setup && sudo dphys-swapfile swapon && sudo apt install default-jdk && sudo apt-get install ruby-full && sudo gem install fpm",
+    "Piconfig": "sudo raspi-config nonint do_i2c 0 && sudo dphys-swapfile swapoff && sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile  &&sudo dphys-swapfile setup && sudo dphys-swapfile swapon && sudo apt install -y default-jdk && sudo apt-get install -y ruby-full && sudo gem install -y fpm && sudo apt install -y g++-arm-linux-gnueabihf",
     "Stemhat:save": "mkdir -p CytronStemhat/vm/extension-support  CytronStemhat/vm/extensions  CytronStemhat/gui/extensions && cp -r node_modules/scratch-vm/src/extensions/scratch3_pistemhat CytronStemhat/vm/extensions/ && cp node_modules/scratch-vm/src/extension-support/extension-manager.js CytronStemhat/vm/extension-support/ && cp -r node_modules/scratch-gui/src/lib/libraries/extensions/pistemhat CytronStemhat/gui/extensions/&& cp node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx CytronStemhat/gui/extensions/",
     "Stemhat:load": "cp -r CytronStemhat/vm/extensions/scratch3_pistemhat node_modules/scratch-vm/src/extensions/ && cp CytronStemhat/vm/extension-support/extension-manager.js node_modules/scratch-vm/src/extension-support/ && cp -r CytronStemhat/gui/extensions/pistemhat node_modules/scratch-gui/src/lib/libraries/extensions/ && cp CytronStemhat/gui/extensions/index.jsx node_modules/scratch-gui/src/lib/libraries/extensions/",
     "clean": "rimraf ./dist ./static/assets",
@@ -25,7 +25,7 @@
     "doBuild": "node ./scripts/electron-builder-wrapper.js",
     "updateVersion32": "node -e \"let fs = require('fs'); let pkg = require('./package.json'); pkg.version = pkg.version.replace(/-32$/, '').replace(/-64$/, '') + '-32'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));\"",
     "updateVersion64": "node -e \"let fs = require('fs'); let pkg = require('./package.json'); pkg.version = pkg.version.replace(/-32$/, '').replace(/-64$/, '') + '-64'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));\"",
-    "dist:rpi32": "npm run updateVersion32 && npm run Stemhat:load && npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp32 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
+    "dist:rpi32": "npm run updateVersion32 && npm run Stemhat:load && npm run clean && npm run compile && npm run compile:cpp32 && npm run compile:stemhatCpp32 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
     "dist:rpi64": "npm run updateVersion64 && npm run Stemhat:load && npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp64 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
