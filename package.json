@@ -23,8 +23,8 @@
     "build:dir": "npm run compile && npm run doBuild -- --mode=dir",
     "build:dist": "npm run compile && npm run doBuild -- --mode=dist",
     "doBuild": "node ./scripts/electron-builder-wrapper.js",
-    "dist:rpi32": "npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp32 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
-    "dist:rpi64": "npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp64 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
+    "dist:rpi32": "npm run Stemhat:load && npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp32 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux32",
+    "dist:rpi64": "npm run Stemhat:load && npm run clean && npm run compile && npm run compile:cpp64 && npm run compile:stemhatCpp64 && npm run compile:stemhatI2c && npm run fetch && npm run doBuild -- --mode=dist --platform=linux64",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
     "postinstall": "git apply patches/*.patch && cd node_modules/scratch-blocks/ && npm i --ignore-scripts && npm exec -c \"python build.py\" && cd ../.. && npm run Stemhat:load"
@@ -34,8 +34,7 @@
     "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
   },
   "dependencies": {
-    "source-map-support": "^0.5.19",
-    "sudo-prompt": "^9.2.1"
+    "source-map-support": "^0.5.19"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",

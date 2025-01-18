@@ -14,8 +14,6 @@ const i2c = window.require(path.join(__static, 'i2c-bus.js'));
 const oled = window.require(path.join(__static, 'oled.js'));
 const font = window.require(path.join(__static, 'oled-font.js'));
 
-var sudo = window.require('sudo-prompt');
-const { exec } = require('child_process');
 
 
 //////////////////////////////////////////////////////////////////
