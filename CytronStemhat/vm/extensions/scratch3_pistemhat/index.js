@@ -14,71 +14,6 @@ const i2c = window.require(path.join(__static, 'i2c-bus.js'));
 const oled = window.require(path.join(__static, 'oled.js'));
 const font = window.require(path.join(__static, 'oled-font.js'));
 
-var sudo = window.require('sudo-prompt');
-const { exec } = require('child_process');
-
-
-//To Request Permission for GPIOD 
-exec('crontab -l 2>/dev/null | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error checking crontab: ${error.message}`);
-      return;
-    }
-  
-    if (stderr) {
-      console.error(`Error: ${stderr}`);
-      return;
-    }
-  
-    if (stdout.trim() === '0') 
-    {
-      // 'pigpiod' is not in the crontab, add it
-      console.log("Adding 'pigpiod' to crontab...");
-      exec('(crontab -l 2>/dev/null; echo "@reboot sudo pigpiod") | crontab -', (addError, addStdout, addStderr) => {
-        if (addError) {
-          console.error(`Error adding to crontab: ${addError.message}`);
-          return;
-        }
-  
-        if (addStderr) {
-          console.error(`Error: ${addStderr}`);
-          return;
-        }
-  
-        console.log("'pigpiod' added to crontab successfully.");
-      });
-    } else {
-      console.log("'pigpiod' is already in the crontab.");
-    }
-  });
-  
-  exec('ps aux | grep -v grep | grep -q pigpiod && echo 1 || echo 0', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error checking pigpiod status: ${error.message}`);
-      return;
-    }
-  
-    if (stderr) {
-      console.error(`Error: ${stderr}`);
-      return;
-    }
-  
-    if (stdout.trim() === '0') 
-    {
-      var options = {
-        name: 'Electron',
-      };
-      sudo.exec('pigpiod', options,
-        function(error, stdout, stderr) {
-          if (error) throw error;
-          console.log('stdout: ' + stdout);
-        }
-      );
-    } else {
-      console.log('pigpiod is already running.');
-    }
-  });
-  
 
 
 //////////////////////////////////////////////////////////////////
@@ -787,14 +722,14 @@ class Scratch3PiSTEMHATBlocks {
         const frequency = Cast.toNumber(args.FREQ);
         if(cachedBuzzerValue !== frequency)
         {
-            stemhat.BuzzerSet(frequency, 128);
+            stemhat.I2cwriteToRegister(device, 0x13, Math.floor(frequency/10));
             cachedBuzzerValue = frequency;
         }
         
 
     }
     stop_BUZZER(args) {
-        stemhat.BuzzerSet(0, 0);
+        stemhat.I2cwriteToRegister(device, 0x13, 0);
         cachedBuzzerValue = -1;
     }
 
