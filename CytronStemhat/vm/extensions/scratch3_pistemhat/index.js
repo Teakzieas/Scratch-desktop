@@ -160,7 +160,7 @@ class Scratch3PiSTEMHATBlocks {
                 {
                     opcode: 'when_buttonPressed',
                     text: formatMessage({
-                        id: 'pistemhat.WhenBtnPressed',
+                        id: 'pistemhat.when_buttonPressed',
                         default: 'when Button [BUTTON] is pressed',
                         description: 'when a button is pressed'
                     }),
@@ -692,7 +692,7 @@ class Scratch3PiSTEMHATBlocks {
         
         
         const pin = Cast.toNumber(args.BUTTON);
-        const state = gpio.get(pin, -1, -1); // Get state of pin, leave pin as input/output, leave pull state
+        const state = gpio.get(pin, 0, 2); // Get state of pin, leave pin as input/output, leave pull state
         let binary = 0;
         return state == binary
     }
@@ -1013,23 +1013,11 @@ class Scratch3PiSTEMHATBlocks {
     get_button(args) 
     {
         const pin = Cast.toNumber(args.BUTTON);
-        const state = gpio.get(pin, -1, -1); // Get state of pin, leave pin as input/output, leave pull state
+        const state = gpio.get(pin, 0, 2); // Get state of pin, leave pin as input/output, leave pull state
         let binary = 0;
         return state == binary
     }
 
-    get_gpio (args)
-    {
-        const pin = Cast.toNumber (args.GPIO);
-        const val = Cast.toString (args.HILO);
-        const state = gpio.get(pin,-1,-1); // Get state of pin, leave pin as input/output, leave pull state
-        let binary = 0;
-
-        if(val == 'high') 
-            binary = 1
-
-        return state == binary
-    }
 
     get_analog(args) 
     {

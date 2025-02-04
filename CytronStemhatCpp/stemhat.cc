@@ -319,6 +319,7 @@ napi_value AHT20ReadAsync(napi_env env, napi_callback_info info) {
 }
 
 
+
 napi_value Init(napi_env env, napi_value exports) {
     napi_value I2ccreateDeviceFn,I2cwriteToRegisterFn,I2creadFromRegisterFn,AHT20ReadAsyncFn,UltrasonicReadAsynFn;
 
